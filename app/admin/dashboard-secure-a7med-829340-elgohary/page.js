@@ -2,12 +2,13 @@
 import { useState, useEffect } from 'react';
 import portfolioDataFile from '@/data/portfolioData.json';
 
+const LS_KEY = 'portfolio_admin_data';
+
 export default function AdminPage() {
     const [isMounted, setIsMounted] = useState(false);
     const [data, setData] = useState(portfolioDataFile);
     const [status, setStatus] = useState('');
     const [activeTab, setActiveTab] = useState('profile');
-    const [loading, setLoading] = useState(true);
 
     // Selection states for Master-Detail views
     const [selectedProjectId, setSelectedProjectId] = useState(0);
@@ -15,16 +16,16 @@ export default function AdminPage() {
 
     useEffect(() => {
         setIsMounted(true);
-        // Fetch the latest saved data from Vercel Blob
-        fetch('/api/save-data')
-            .then(res => res.ok ? res.json() : null)
-            .then(blobData => {
-                if (blobData && blobData.profile) {
-                    setData(blobData);
-                }
-            })
-            .catch(() => { /* fallback to local JSON already set */ })
-            .finally(() => setLoading(false));
+        // Load from localStorage (persists across sessions on this browser)
+        try {
+            const saved = localStorage.getItem(LS_KEY);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed && parsed.profile) setData(parsed);
+            }
+        } catch (e) {
+            console.warn('Could not load from localStorage', e);
+        }
     }, []);
 
     const handleProfileChange = (field, value) => {
@@ -169,25 +170,35 @@ export default function AdminPage() {
         setData(prev => ({ ...prev, techStack: updatedTech }));
     };
 
-    const handleSave = async () => {
-        setStatus('Saving...');
+    const handleSave = () => {
         try {
-            const response = await fetch('/api/save-data', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            if (result.success) {
-                setStatus('Changes saved successfully! Refresh home page to see updates.');
-                setTimeout(() => setStatus(''), 4000);
-            } else {
-                setStatus('Error saving data.');
-            }
-        } catch (error) {
-            console.error('Save error:', error);
-            setStatus('Failed to connect to the server.');
+            localStorage.setItem(LS_KEY, JSON.stringify(data));
+            setStatus('✅ Changes saved! They persist in this browser. Click "Export JSON" to make them live.');
+            setTimeout(() => setStatus(''), 5000);
+        } catch (e) {
+            setStatus('❌ Could not save to localStorage.');
         }
+    };
+
+    const handleExportJSON = () => {
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'portfolioData.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        setStatus('📥 JSON downloaded! Replace data/portfolioData.json in your project, then git push to go live.');
+        setTimeout(() => setStatus(''), 7000);
+    };
+
+    const handleReset = () => {
+        if (!confirm('Reset to the last deployed version? All unsaved local changes will be lost.')) return;
+        localStorage.removeItem(LS_KEY);
+        setData(portfolioDataFile);
+        setStatus('🔄 Reset to deployed version.');
+        setTimeout(() => setStatus(''), 3000);
     };
 
     const tabs = [
@@ -199,11 +210,6 @@ export default function AdminPage() {
     ];
 
     if (!isMounted) return null;
-    if (loading) return (
-        <div style={{ minHeight: '100vh', background: '#0a192f', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64ffda', fontFamily: 'monospace', fontSize: '18px' }}>
-            Loading latest data...
-        </div>
-    );
 
     return (
         <div className="admin-dashboard" style={{
@@ -290,24 +296,56 @@ export default function AdminPage() {
                         <p style={{ color: '#8892b0', marginTop: '8px' }}>Manage your portfolio's {activeTab} section items.</p>
                     </div>
 
-                    <button
-                        onClick={handleSave}
-                        style={{
-                            background: '#64ffda',
-                            color: '#0a192f',
-                            border: 'none',
-                            padding: '15px 35px',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '16px',
-                            fontWeight: '600',
-                            transition: 'all 0.3s',
-                            boxShadow: '0 10px 20px -10px rgba(100, 255, 218, 0.3)'
-                        }}
-                    >
-                        <i className="fa-solid fa-floppy-disk" style={{ marginRight: '10px' }}></i>
-                        Save Changes
-                    </button>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <button
+                            onClick={handleReset}
+                            style={{
+                                background: 'transparent',
+                                color: '#8892b0',
+                                border: '1px solid #233554',
+                                padding: '12px 20px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                            }}
+                        >
+                            Reset
+                        </button>
+                        <button
+                            onClick={handleExportJSON}
+                            style={{
+                                background: 'transparent',
+                                color: '#64ffda',
+                                border: '1px solid #64ffda',
+                                padding: '15px 25px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '15px',
+                                fontWeight: '600',
+                            }}
+                        >
+                            <i className="fa-solid fa-download" style={{ marginRight: '8px' }}></i>
+                            Export JSON
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            style={{
+                                background: '#64ffda',
+                                color: '#0a192f',
+                                border: 'none',
+                                padding: '15px 35px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '16px',
+                                fontWeight: '600',
+                                transition: 'all 0.3s',
+                                boxShadow: '0 10px 20px -10px rgba(100, 255, 218, 0.3)'
+                            }}
+                        >
+                            <i className="fa-solid fa-floppy-disk" style={{ marginRight: '10px' }}></i>
+                            Save Changes
+                        </button>
+                    </div>
                 </header>
 
                 {status && (

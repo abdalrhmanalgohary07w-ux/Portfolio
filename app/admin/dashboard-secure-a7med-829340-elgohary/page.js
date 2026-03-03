@@ -7,6 +7,7 @@ export default function AdminPage() {
     const [data, setData] = useState(portfolioDataFile);
     const [status, setStatus] = useState('');
     const [activeTab, setActiveTab] = useState('profile');
+    const [loading, setLoading] = useState(true);
 
     // Selection states for Master-Detail views
     const [selectedProjectId, setSelectedProjectId] = useState(0);
@@ -14,6 +15,16 @@ export default function AdminPage() {
 
     useEffect(() => {
         setIsMounted(true);
+        // Fetch the latest saved data from Vercel Blob
+        fetch('/api/save-data')
+            .then(res => res.ok ? res.json() : null)
+            .then(blobData => {
+                if (blobData && blobData.profile) {
+                    setData(blobData);
+                }
+            })
+            .catch(() => { /* fallback to local JSON already set */ })
+            .finally(() => setLoading(false));
     }, []);
 
     const handleProfileChange = (field, value) => {
@@ -188,6 +199,11 @@ export default function AdminPage() {
     ];
 
     if (!isMounted) return null;
+    if (loading) return (
+        <div style={{ minHeight: '100vh', background: '#0a192f', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64ffda', fontFamily: 'monospace', fontSize: '18px' }}>
+            Loading latest data...
+        </div>
+    );
 
     return (
         <div className="admin-dashboard" style={{

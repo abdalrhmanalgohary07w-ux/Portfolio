@@ -350,7 +350,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="hero-image-wrapper gs-reveal" style={{ marginLeft: 'auto', flexShrink: 0, transform: 'translateX(160px)' }}>
+                <div className="hero-image-wrapper gs-reveal" style={{ marginLeft: 'auto', flexShrink: 0, transform: 'translateX(80px)' }}>
                   <div className="hero-image-container">
                     <img src={heroImage} alt="Ahmed Elgohary Avatar" className="hero-avatar" />
                     <div className="hero-glow"></div>

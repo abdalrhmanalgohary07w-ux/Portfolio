@@ -1,16 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // تحديد جذر المشروع لحل مشكلة الـ lockfiles المتعددة
-  experimental: {
-    // إذا كنت تستخدم Turbopack (كما يظهر في اللوج)، نحدد الجذر هنا
-    turbo: {
-      root: '.',
-    },
-  },
-  // إعدادات إضافية لتحسين التوافق
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // ترك الخيارات الافتراضية للنسخة 16 لضمان استقرار الـ Build
+  reactStrictMode: true,
 };
 
 export default nextConfig;

@@ -109,8 +109,10 @@ export default function AdminPage() {
     };
 
     const handleRemoveAboutImage = (index) => {
-        const newImages = data.about.images.filter((_, i) => i !== index);
-        setData(prev => ({ ...prev, about: { ...prev.about, images: newImages } }));
+        setData(prev => {
+            const newImages = prev.about.images.filter((_, i) => i !== index);
+            return { ...prev, about: { ...prev.about, images: newImages } };
+        });
     };
 
     const handleProjectChange = (index, field, value) => {
@@ -464,9 +466,14 @@ export default function AdminPage() {
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                     {(data.about.images || []).map((img, idx) => (
-                                        <div key={idx} style={{ position: 'relative', background: 'rgba(10, 25, 47, 0.3)', padding: '20px', borderRadius: '12px', border: '1px solid #233554' }}>
+                                        <div key={`img-${img}-${idx}`} style={{ position: 'relative', background: 'rgba(10, 25, 47, 0.3)', padding: '20px', borderRadius: '12px', border: '1px solid #233554' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                                <span style={{ fontSize: '13px', color: '#8892b0', fontWeight: '600' }}>Card {idx + 1}</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    {img && !img.startsWith('placeholder') && (
+                                                        <img src={img} alt="preview" style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #233554' }} />
+                                                    )}
+                                                    <span style={{ fontSize: '13px', color: '#8892b0', fontWeight: '600' }}>Card {idx + 1}</span>
+                                                </div>
                                                 <button
                                                     onClick={() => handleRemoveAboutImage(idx)}
                                                     style={{ background: 'transparent', border: 'none', color: '#ff6464', cursor: 'pointer', fontSize: '18px' }}

@@ -185,14 +185,29 @@ export default function AdminPage() {
         setData(prev => ({ ...prev, techStack: updatedTech }));
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        // Save to localStorage immediately (always works)
+        try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch (_) { }
+
+        // Also call the API — locally it writes to the JSON file directly
         try {
-            localStorage.setItem(LS_KEY, JSON.stringify(data));
-            setStatus('✅ Saved to browser! Click "Export JSON" → replace the file → git push to go live.');
-            setTimeout(() => setStatus(''), 5000);
-        } catch (e) {
-            setStatus('❌ Could not save to localStorage.');
+            const response = await fetch('/api/save-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (result.local) {
+                // Running locally — file was written, just git push
+                setStatus('✅ Saved to file! Run "git push" in terminal to go live.');
+            } else {
+                // On Vercel — need export flow
+                setStatus('✅ Saved to browser! Click "Export JSON" → replace data/portfolioData.json → git push.');
+            }
+        } catch (_) {
+            setStatus('✅ Saved to browser! Click "Export JSON" → replace data/portfolioData.json → git push.');
         }
+        setTimeout(() => setStatus(''), 7000);
     };
 
     const handleExportJSON = () => {

@@ -186,10 +186,10 @@ export default function AdminPage() {
     };
 
     const handleSave = async () => {
-        // Save to localStorage immediately (always works)
+        // Always save to localStorage immediately as backup
         try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch (_) { }
 
-        // Also call the API — locally it writes to the JSON file directly
+        setStatus('⏳ Saving...');
         try {
             const response = await fetch('/api/save-data', {
                 method: 'POST',
@@ -197,17 +197,20 @@ export default function AdminPage() {
                 body: JSON.stringify(data)
             });
             const result = await response.json();
-            if (result.local) {
-                // Running locally — file was written, just git push
-                setStatus('✅ Saved to file! Run "git push" in terminal to go live.');
+
+            if (!result.success) {
+                setStatus('❌ ' + (result.message || 'Save failed.'));
+            } else if (result.mode === 'local') {
+                setStatus('✅ Saved! Run "git push" to go live.');
+            } else if (result.mode === 'github') {
+                setStatus('🚀 Saved! Site updating automatically in ~1 minute...');
             } else {
-                // On Vercel — need export flow
-                setStatus('✅ Saved to browser! Click "Export JSON" → replace data/portfolioData.json → git push.');
+                setStatus('⚠️ Saved to browser only. Add GITHUB_TOKEN to Vercel env vars to enable auto-publish.');
             }
         } catch (_) {
-            setStatus('✅ Saved to browser! Click "Export JSON" → replace data/portfolioData.json → git push.');
+            setStatus('⚠️ Saved to browser only. Check your connection.');
         }
-        setTimeout(() => setStatus(''), 7000);
+        setTimeout(() => setStatus(''), 8000);
     };
 
     const handleExportJSON = () => {

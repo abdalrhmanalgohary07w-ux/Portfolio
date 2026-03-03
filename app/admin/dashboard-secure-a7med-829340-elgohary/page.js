@@ -14,6 +14,8 @@ export default function AdminPage() {
     const [selectedProjectId, setSelectedProjectId] = useState(0);
     const [selectedCertId, setSelectedCertId] = useState(0);
 
+    const [isLoaded, setIsLoaded] = useState(false);
+
     useEffect(() => {
         setIsMounted(true);
         // Load from localStorage (persists across sessions on this browser)
@@ -26,7 +28,18 @@ export default function AdminPage() {
         } catch (e) {
             console.warn('Could not load from localStorage', e);
         }
+        setIsLoaded(true);
     }, []);
+
+    // Auto-save every change to localStorage once initial data is loaded
+    useEffect(() => {
+        if (!isLoaded) return;
+        try {
+            localStorage.setItem(LS_KEY, JSON.stringify(data));
+        } catch (e) {
+            console.warn('Auto-save failed', e);
+        }
+    }, [data, isLoaded]);
 
     const handleProfileChange = (field, value) => {
         setData(prev => ({
@@ -173,7 +186,7 @@ export default function AdminPage() {
     const handleSave = () => {
         try {
             localStorage.setItem(LS_KEY, JSON.stringify(data));
-            setStatus('✅ Changes saved! They persist in this browser. Click "Export JSON" to make them live.');
+            setStatus('✅ Saved to browser! Click "Export JSON" → replace the file → git push to go live.');
             setTimeout(() => setStatus(''), 5000);
         } catch (e) {
             setStatus('❌ Could not save to localStorage.');
@@ -327,6 +340,7 @@ export default function AdminPage() {
                             <i className="fa-solid fa-download" style={{ marginRight: '8px' }}></i>
                             Export JSON
                         </button>
+
                         <button
                             onClick={handleSave}
                             style={{
@@ -348,16 +362,37 @@ export default function AdminPage() {
                     </div>
                 </header>
 
+                {/* Workflow info banner */}
+                <div style={{
+                    padding: '12px 18px',
+                    background: 'rgba(100, 255, 218, 0.05)',
+                    border: '1px solid #233554',
+                    borderRadius: '8px',
+                    marginBottom: '30px',
+                    fontSize: '13px',
+                    color: '#8892b0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                }}>
+                    <i className="fa-solid fa-circle-info" style={{ color: '#64ffda' }}></i>
+                    <span>
+                        ✏️ كل تغيير بيتحفظ تلقائياً في المتصفح.&nbsp;
+                        <strong style={{ color: '#ccd6f6' }}>عشان يظهر على السايت:</strong>&nbsp;
+                        اضغط <strong style={{ color: '#64ffda' }}>Export JSON</strong> ← استبدل ملف <code style={{ color: '#64ffda' }}>data/portfolioData.json</code> ← <code style={{ color: '#64ffda' }}>git push</code>
+                    </span>
+                </div>
+
                 {status && (
                     <div style={{
                         padding: '18px',
-                        background: status.includes('successfully') ? 'rgba(100, 255, 218, 0.1)' : 'rgba(255, 100, 100, 0.1)',
-                        border: `1px solid ${status.includes('successfully') ? '#64ffda' : '#ff6464'}`,
+                        background: status.includes('❌') ? 'rgba(255, 100, 100, 0.1)' : 'rgba(100, 255, 218, 0.1)',
+                        border: `1px solid ${status.includes('❌') ? '#ff6464' : '#64ffda'}`,
                         borderRadius: '8px',
                         marginBottom: '40px',
                         textAlign: 'center',
                         fontWeight: '500',
-                        color: status.includes('successfully') ? '#64ffda' : '#ff6464'
+                        color: status.includes('❌') ? '#ff6464' : '#64ffda'
                     }}>
                         {status}
                     </div>

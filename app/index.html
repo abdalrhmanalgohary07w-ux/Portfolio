@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ahmed Elgohary | Full Stack & Mobile Developer</title>
+    <meta name="description"
+        content="Ahmed Elgohary - Full Stack Developer & Mobile App Builder specializing in ASP.NET Core backend, React frontend, and cross-platform mobile apps.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- Three.js 3D Background -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <!-- Fixed Header / Navbar -->
+    <header class="navbar">
+        <div class="logo">
+            <span class="bracket">{</span> AE <span class="bracket">}</span>
+        </div>
+
+        <!-- Nav Links (Desktop) -->
+        <nav class="nav-links" id="nav-links">
+            <a href="#about" class="nav-link">About</a>
+            <a href="#projects" class="nav-link">Projects</a>
+            <a href="#experience" class="nav-link">Experience</a>
+            <a href="#contact" class="nav-link">Contact</a>
+        </nav>
+
+        <!-- Right: Resume & Hamburger -->
+        <div class="navbar-right">
+            <a href="CV.pdf" target="_blank" class="btn primary nav-resume-btn">Resume</a>
+            <button class="hamburger" id="hamburger" aria-label="Open Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Nav Overlay -->
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay">
+        <nav class="mobile-nav-links">
+            <a href="#about" class="mobile-nav-link"><span class="nav-num">01.</span> About</a>
+            <a href="#projects" class="mobile-nav-link"><span class="nav-num">02.</span> Projects</a>
+            <a href="#experience" class="mobile-nav-link"><span class="nav-num">03.</span> Experience</a>
+            <a href="#contact" class="mobile-nav-link"><span class="nav-num">04.</span> Contact</a>
+            <a href="CV.pdf" target="_blank" class="btn primary"
+                style="margin-top:20px; width:100%; text-align:center; justify-content:center;">Resume <i
+                    class="fa-solid fa-download"></i></a>
+        </nav>
+    </div>
+
+
+    <!-- Slide Indicators -->
+    <div class="slide-indicators">
+        <div class="indicator active" data-target="hero"></div>
+        <div class="indicator" data-target="about"></div>
+        <div class="indicator" data-target="projects"></div>
+        <div class="indicator" data-target="experience"></div>
+        <div class="indicator" data-target="contact"></div>
+    </div>
+
+
+    <!-- Main Content wrapper for GSAP Scroll -->
+    <main id="smooth-wrapper">
+        <div id="smooth-content">
+
+            <!-- SECTION 1: HERO -->
+            <section class="panel hero" id="hero">
+                <div class="container hero-container">
+                    <div class="hero-content">
+                        <p class="tagline gs-reveal"><span><i class="fa-solid fa-terminal"></i></span>
+                            Console.WriteLine("Hello, World!");</p>
+                        <h1 class="gs-reveal">I'm <span>Ahmed Elgohary</span>.</h1>
+                        <h2 class="gs-reveal">I build <span class="gradient-text">full stack systems
+                                & mobile apps</span>.
+                        </h2>
+                        <p class="hero-desc gs-reveal">A software engineer skilled in <strong>ASP.NET Core</strong>
+                            backends, modern frontends with <strong>React</strong>, and cross-platform mobile apps with
+                            <strong>Flutter</strong>. I build complete, production-ready systems from database to UI.
+                        </p>
+
+                        <div class="btn-group">
+                            <a href="#projects" class="btn primary">View My Work <i
+                                    class="fa-solid fa-arrow-right"></i></a>
+                            <a href="CV.pdf" class="btn secondary" target="_blank">Download CV <i
+                                    class="fa-solid fa-download"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="hero-image-wrapper gs-reveal">
+                        <div class="hero-image-container">
+                            <img src="hero_avatar.png" alt="Ahmed Elgohary Avatar" class="hero-avatar">
+                            <div class="hero-glow"></div>
+                        </div>
+                        <!-- Social Links below image -->
+                        <div class="hero-social">
+                            <a href="https://github.com/a7med-elgohary" target="_blank" title="GitHub"><i
+                                    class="fa-brands fa-github"></i></a>
+                            <a href="https://linkedin.com/in/ahmed-elgohary7" target="_blank" title="LinkedIn"><i
+                                    class="fa-brands fa-linkedin-in"></i></a>
+                            <a href="mailto:ahmedelgoharyy7@gmail.com" target="_blank" title="Email"><i
+                                    class="fa-regular fa-envelope"></i></a>
+                            <a href="https://wa.me/201097377236" target="_blank" title="WhatsApp"><i
+                                    class="fa-brands fa-whatsapp"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="scroll-down" style="bottom: 60px;">
+                    <div class="mouse">
+                        <div class="wheel"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TECH STACK MARQUEE -->
+            <div class="marquee-section tech-marquee gs-reveal">
+                <div class="marquee-content" style="animation-duration: 25s;">
+                    <div class="tech-item"><i class="fa-brands fa-microsoft" style="color:#512BD4"></i> C# / ASP.NET
+                        Core</div>
+                    <div class="tech-item"><i class="fa-solid fa-database" style="color:#CC2927"></i> SQL Server / EF
+                        Core</div>
+                    <div class="tech-item"><i class="fa-brands fa-react" style="color:#61DAFB"></i> React</div>
+                    <div class="tech-item"><i class="fa-solid fa-mobile-screen" style="color:#54C5F8"></i> Flutter</div>
+                    <div class="tech-item"><i class="fa-solid fa-key" style="color:#F5A623"></i> JWT / Auth</div>
+                    <div class="tech-item"><i class="fa-brands fa-git-alt" style="color:#F05032"></i> Git / GitHub</div>
+                    <div class="tech-item"><i class="fa-brands fa-js" style="color:#F7DF1E"></i> JavaScript</div>
+                    <div class="tech-item"><i class="fa-solid fa-sitemap" style="color:#64FFDA"></i> Clean Architecture
+                    </div>
+
+                    <!-- Duplicate for infinite continuous flow -->
+                    <div class="tech-item"><i class="fa-brands fa-microsoft" style="color:#512BD4"></i> C# / ASP.NET
+                        Core</div>
+                    <div class="tech-item"><i class="fa-solid fa-database" style="color:#CC2927"></i> SQL Server / EF
+                        Core</div>
+                    <div class="tech-item"><i class="fa-brands fa-react" style="color:#61DAFB"></i> React</div>
+                    <div class="tech-item"><i class="fa-solid fa-mobile-screen" style="color:#54C5F8"></i> Flutter</div>
+                    <div class="tech-item"><i class="fa-solid fa-key" style="color:#F5A623"></i> JWT / Auth</div>
+                    <div class="tech-item"><i class="fa-brands fa-git-alt" style="color:#F05032"></i> Git / GitHub</div>
+                    <div class="tech-item"><i class="fa-brands fa-js" style="color:#F7DF1E"></i> JavaScript</div>
+                    <div class="tech-item"><i class="fa-solid fa-sitemap" style="color:#64FFDA"></i> Clean Architecture
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: ABOUT & SKILLS -->
+            <section class="panel about" id="about">
+                <div class="container">
+                    <div class="section-header gs-reveal">
+                        <h2 class="num">01.</h2>
+                        <h2 class="title">About Me</h2>
+                        <div class="line"></div>
+                    </div>
+
+                    <div class="about-grid">
+                        <div class="about-text glass-card gs-reveal">
+                            <p>Hello! I'm Ahmed — a software engineer who builds complete systems from the ground up. I
+                                work across the full stack: backend APIs with <strong>ASP.NET Core</strong>, frontends
+                                with <strong>React</strong>, and cross-platform mobile apps with
+                                <strong>Flutter</strong>.
+                            </p>
+                            <p>Currently studying Computer Science (Information Systems) at Mansoura University. I enjoy
+                                solving complex problems, picking up new technologies fast, and shipping clean, secure
+                                systems that make a real impact.</p>
+                        </div>
+
+                    </div>
+                </div>
+        </div>
+        </section>
+
+        <!-- SECTION 3: PROJECTS -->
+        <section class="panel projects" id="projects">
+            <div class="container">
+                <div class="section-header gs-reveal">
+                    <h2 class="num">02.</h2>
+                    <h2 class="title">Some Things I've Built</h2>
+                    <div class="line"></div>
+                </div>
+            </div>
+
+            <div class="marquee-section projects-marquee">
+                <div class="marquee-content projects-marquee-content">
+                    <!-- Project 1: HR Management System -->
+                    <div class="modern-card gs-reveal">
+                        <div class="modern-card-image">
+                            <img src="HR.png" alt="HR Management System"
+                                style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div class="modern-card-content">
+                            <div class="modern-card-header">
+                                <div class="modern-card-folder"><i class="fa-regular fa-folder-open"></i></div>
+                                <div class="modern-card-links">
+                                    <a href="https://github.com/a7med-elgohary" target="_blank"><i
+                                            class="fa-brands fa-github"></i></a>
+                                    <a href="https://system-e-bussiness.vercel.app/" target="_blank"><i
+                                            class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                </div>
+                            </div>
+                            <h3 class="modern-card-title">HR Management System</h3>
+                            <div class="modern-card-desc">
+                                <p>A full-featured HR system with secure RESTful APIs, JWT authentication.</p>
+                            </div>
+                            <ul class="modern-card-tech">
+                                <li>ASP.NET Core</li>
+                                <li>SQL Server</li>
+                                <li>React</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Project 2: E-Commerce -->
+                    <div class="modern-card gs-reveal">
+                        <div class="modern-card-image">
+                            <img src="Ecommerce_Store.png" alt="E-Commerce Platform"
+                                style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div class="modern-card-content">
+                            <div class="modern-card-header">
+                                <div class="modern-card-folder"><i class="fa-regular fa-folder-open"></i></div>
+                                <div class="modern-card-links">
+                                    <a href="https://github.com/a7med-elgohary" target="_blank"><i
+                                            class="fa-brands fa-github"></i></a>
+                                    <a href="http://e-store.runasp.net/" target="_blank"><i
+                                            class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                </div>
+                            </div>
+                            <h3 class="modern-card-title">E-Commerce Platform</h3>
+                            <div class="modern-card-desc">
+                                <p>Ecommerce solution with cart and admin panel using clean architecture.</p>
+                            </div>
+                            <ul class="modern-card-tech">
+                                <li>ASP.NET MVC</li>
+                                <li>SQL Server</li>
+                                <li>EF Core</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Project 3: Smart Invoice App -->
+                    <div class="modern-card gs-reveal">
+                        <div class="modern-card-image default-bg"
+                            style="background: linear-gradient(135deg, rgba(16, 33, 62, 1), rgba(100,255,218,0.1)); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-file-invoice-dollar placeholder-icon"
+                                style="font-size: 60px; color: var(--neon); opacity: 0.8;"></i>
+                        </div>
+                        <div class="modern-card-content">
+                            <div class="modern-card-header">
+                                <div class="modern-card-folder"><i class="fa-regular fa-folder-open"></i></div>
+                                <div class="modern-card-links">
+                                    <a href="https://github.com/a7med-elgohary" target="_blank"><i
+                                            class="fa-brands fa-github"></i></a>
+                                </div>
+                            </div>
+                            <h3 class="modern-card-title">Smart Invoice App</h3>
+                            <div class="modern-card-desc">
+                                <p>Mobile application for tracking invoices with automatic tax calculus.</p>
+                            </div>
+                            <ul class="modern-card-tech">
+                                <li>Flutter</li>
+                                <li>Dart</li>
+                                <li>SQLite</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Project 4: Receipt Tracker System -->
+                    <div class="modern-card gs-reveal">
+                        <div class="modern-card-image default-bg"
+                            style="background: linear-gradient(135deg, rgba(16, 33, 62, 1), rgba(100,255,218,0.1)); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-receipt placeholder-icon"
+                                style="font-size: 60px; color: var(--neon); opacity: 0.8;"></i>
+                        </div>
+                        <div class="modern-card-content">
+                            <div class="modern-card-header">
+                                <div class="modern-card-folder"><i class="fa-regular fa-folder-open"></i></div>
+                                <div class="modern-card-links">
+                                    <a href="https://github.com/a7med-elgohary" target="_blank"><i
+                                            class="fa-brands fa-github"></i></a>
+                                </div>
+                            </div>
+                            <h3 class="modern-card-title">Receipt Tracking</h3>
+                            <div class="modern-card-desc">
+                                <p>Financial tracking system implementing "safe box" treasury feature.</p>
+                            </div>
+                            <ul class="modern-card-tech">
+                                <li>Flutter</li>
+                                <li>REST API</li>
+                                <li>Dart</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- DUPLICATES FOR INFINITE FLOW -->
+                    <!-- Project 1: HR Management System -->
+                    <div class="modern-card gs-reveal">
+                        <div class="modern-card-image">
+                            <img src="HR.png" alt="HR Management System"
+                                style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div class="modern-card-content">
+                            <div class="modern-card-header">
+                                <div class="modern-card-folder"><i class="fa-regular fa-folder-open"></i></div>
+                                <div class="modern-card-links">
+                                    <a href="https://github.com/a7med-elgohary" target="_blank"><i
+                                            class="fa-brands fa-github"></i></a>
+                                    <a href="https://system-e-bussiness.vercel.app/" target="_blank"><i
+                                            class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                </div>
+                            </div>
+                            <h3 class="modern-card-title">HR Management System</h3>
+                            <div class="modern-card-desc">
+                                <p>A full-featured HR system with secure RESTful APIs, JWT authentication.</p>
+                            </div>
+                            <ul class="modern-card-tech">
+                                <li>ASP.NET Core</li>
+                                <li>SQL Server</li>
+                                <li>React</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Project 2: E-Commerce -->
+                    <div class="modern-card gs-reveal">
+                        <div class="modern-card-image">
+                            <img src="Ecommerce_Store.png" alt="E-Commerce Platform"
+                                style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div class="modern-card-content">
+                            <div class="modern-card-header">
+                                <div class="modern-card-folder"><i class="fa-regular fa-folder-open"></i></div>
+                                <div class="modern-card-links">
+                                    <a href="https://github.com/a7med-elgohary" target="_blank"><i
+                                            class="fa-brands fa-github"></i></a>
+                                    <a href="http://e-store.runasp.net/" target="_blank"><i
+                                            class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                </div>
+                            </div>
+                            <h3 class="modern-card-title">E-Commerce Platform</h3>
+                            <div class="modern-card-desc">
+                                <p>Ecommerce solution with cart and admin panel using clean architecture.</p>
+                            </div>
+                            <ul class="modern-card-tech">
+                                <li>ASP.NET MVC</li>
+                                <li>SQL Server</li>
+                                <li>EF Core</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Project 3: Smart Invoice App -->
+                    <div class="modern-card gs-reveal">
+                        <div class="modern-card-image default-bg"
+                            style="background: linear-gradient(135deg, rgba(16, 33, 62, 1), rgba(100,255,218,0.1)); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-file-invoice-dollar placeholder-icon"
+                                style="font-size: 60px; color: var(--neon); opacity: 0.8;"></i>
+                        </div>
+                        <div class="modern-card-content">
+                            <div class="modern-card-header">
+                                <div class="modern-card-folder"><i class="fa-regular fa-folder-open"></i></div>
+                                <div class="modern-card-links">
+                                    <a href="https://github.com/a7med-elgohary" target="_blank"><i
+                                            class="fa-brands fa-github"></i></a>
+                                </div>
+                            </div>
+                            <h3 class="modern-card-title">Smart Invoice App</h3>
+                            <div class="modern-card-desc">
+                                <p>Mobile application for tracking invoices with automatic tax calculus.</p>
+                            </div>
+                            <ul class="modern-card-tech">
+                                <li>Flutter</li>
+                                <li>Dart</li>
+                                <li>SQLite</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Project 4: Receipt Tracker System -->
+                    <div class="modern-card gs-reveal">
+                        <div class="modern-card-image default-bg"
+                            style="background: linear-gradient(135deg, rgba(16, 33, 62, 1), rgba(100,255,218,0.1)); display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-receipt placeholder-icon"
+                                style="font-size: 60px; color: var(--neon); opacity: 0.8;"></i>
+                        </div>
+                        <div class="modern-card-content">
+                            <div class="modern-card-header">
+                                <div class="modern-card-folder"><i class="fa-regular fa-folder-open"></i></div>
+                                <div class="modern-card-links">
+                                    <a href="https://github.com/a7med-elgohary" target="_blank"><i
+                                            class="fa-brands fa-github"></i></a>
+                                </div>
+                            </div>
+                            <h3 class="modern-card-title">Receipt Tracking</h3>
+                            <div class="modern-card-desc">
+                                <p>Financial tracking system implementing "safe box" treasury feature.</p>
+                            </div>
+                            <ul class="modern-card-tech">
+                                <li>Flutter</li>
+                                <li>REST API</li>
+                                <li>Dart</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: EXPERIENCE -->
+        <section class="panel experience" id="experience">
+            <div class="container">
+                <div class="section-header gs-reveal">
+                    <h2 class="num">03.</h2>
+                    <h2 class="title">Where I've Worked</h2>
+                    <div class="line"></div>
+                </div>
+
+                <div class="timeline">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-progress" id="timeline-progress"></div>
+
+                    <div class="timeline-item gs-reveal">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content glass-card">
+                            <h3>Backend Developer <span>@ HR Management System</span></h3>
+                            <p class="date">2024 - Present &nbsp;|&nbsp; ASP.NET Core, SQL Server, React</p>
+                            <ul>
+                                <li>Developed backend services including RESTful APIs with clean architecture and
+                                    best practices.</li>
+                                <li>Implemented JWT-based authentication and role-based authorization for secure
+                                    access control.</li>
+                                <li>Improved system scalability and data security through Repository Pattern and
+                                    Unit of Work.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item gs-reveal">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content glass-card">
+                            <h3>Backend Developer <span>@ E-Commerce Platform</span></h3>
+                            <p class="date">2023 - 2024 &nbsp;|&nbsp; ASP.NET Core MVC, SQL Server</p>
+                            <ul>
+                                <li>Developed a custom e-commerce platform with product catalog and user management.
+                                </li>
+                                <li>Implemented secure Admin Panel to manage products, categories, and users using
+                                    Entity Framework and LINQ.</li>
+                                <li>Built backend features including shopping cart logic, order processing, and
+                                    applied clean architecture throughout.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: CONTACT -->
+        <section class="panel contact" id="contact">
+            <div class="container text-center gs-reveal">
+                <p class="overline">04. What's Next?</p>
+                <h2 class="title">Get In Touch</h2>
+                <p class="contact-desc">I'm currently open to new opportunities and collaborations. Whether you have
+                    a project idea, a question, or just want to connect — feel free to reach out!</p>
+
+                <div class="btn-group" style="justify-content: center; margin-top: 30px;">
+                    <a href="mailto:ahmedelgoharyy7@gmail.com" class="btn primary huge">Email Me <i
+                            class="fa-regular fa-paper-plane"></i></a>
+                    <a href="https://wa.me/201097377236" target="_blank" class="btn huge"
+                        style="border-color: #25D366; color: #25D366;">WhatsApp <i
+                            class="fa-brands fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </section>
+
+        </div>
+    </main>
+
+    <!-- Scripts: Three.js, GSAP, Custom JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

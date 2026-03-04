@@ -1,87 +1,62 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { getPool, sql } from '@/lib/db';
+import portfolioDataFile from '@/data/portfolioData.json';
 
-const isLocal = process.env.NODE_ENV === 'development';
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_REPO = process.env.GITHUB_REPO; // e.g. "abdalrhmanalgohary07w-ux/Portfolio"
-const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
-const FILE_PATH = 'data/portfolioData.json';
-
-async function updateFileOnGitHub(content) {
-    // 1. Get current file SHA (required by GitHub API to update a file)
-    const getRes = await fetch(
-        `https://api.github.com/repos/${GITHUB_REPO}/contents/${FILE_PATH}?ref=${GITHUB_BRANCH}`,
-        { headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, 'User-Agent': 'portfolio-admin' } }
-    );
-    if (!getRes.ok) throw new Error(`GitHub GET failed: ${getRes.status}`);
-    const fileData = await getRes.json();
-    const sha = fileData.sha;
-
-    // 2. Update the file
-    const encoded = Buffer.from(content).toString('base64');
-    const putRes = await fetch(
-        `https://api.github.com/repos/${GITHUB_REPO}/contents/${FILE_PATH}`,
-        {
-            method: 'PUT',
-            headers: {
-                Authorization: `Bearer ${GITHUB_TOKEN}`,
-                'Content-Type': 'application/json',
-                'User-Agent': 'portfolio-admin'
-            },
-            body: JSON.stringify({
-                message: 'chore: update portfolio data via admin panel',
-                content: encoded,
-                sha,
-                branch: GITHUB_BRANCH
-            })
-        }
-    );
-    if (!putRes.ok) {
-        const err = await putRes.json();
-        throw new Error(`GitHub PUT failed: ${JSON.stringify(err)}`);
-    }
-    return await putRes.json();
-}
-
-export async function POST(request) {
-    const newData = await request.json();
-    const jsonContent = JSON.stringify(newData, null, 2);
-
-    // ── Local development: write directly to file ──────────────────────────
-    if (isLocal) {
-        try {
-            const filePath = path.join(process.cwd(), 'data', 'portfolioData.json');
-            fs.writeFileSync(filePath, jsonContent, 'utf-8');
-            return NextResponse.json({ success: true, mode: 'local', message: 'Saved to file!' });
-        } catch (error) {
-            return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-        }
-    }
-
-    // ── Vercel: update file on GitHub → triggers auto-redeploy ───────────
-    if (GITHUB_TOKEN && GITHUB_REPO) {
-        try {
-            await updateFileOnGitHub(jsonContent);
-            return NextResponse.json({
-                success: true,
-                mode: 'github',
-                message: 'Saved! Site will update in ~1 minute as Vercel redeploys.'
-            });
-        } catch (error) {
-            console.error('GitHub API error:', error);
-            return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-        }
-    }
-
-    // ── Fallback: no GitHub token configured ──────────────────────────────
-    return NextResponse.json({
-        success: true,
-        mode: 'browser',
-        message: 'No GitHub token set. Add GITHUB_TOKEN to Vercel env vars to enable auto-save.'
-    });
+// Run once to create table + seed initial data if empty
+async function ensureTable(pool) {
+    await pool.request().query(`
+        IF NOT EXISTS (
+            SELECT * FROM sysobjects WHERE name='portfolio_data' AND xtype='U'
+        )
+        BEGIN
+            CREATE TABLE portfolio_data (
+                id INT PRIMARY KEY DEFAULT 1,
+                data NVARCHAR(MAX) NOT NULL,
+                updated_at DATETIME DEFAULT GETDATE()
+            );
+            INSERT INTO portfolio_data (id, data)
+            VALUES (1, '${JSON.stringify(portfolioDataFile).replace(/'/g, "''")}');
+        END
+    `);
 }
 
 export async function GET() {
-    return NextResponse.json({ success: false }, { status: 404 });
+    try {
+        const pool = await getPool();
+        await ensureTable(pool);
+        const result = await pool.request().query('SELECT data FROM portfolio_data WHERE id = 1');
+        if (result.recordset.length === 0) {
+            return NextResponse.json(portfolioDataFile);
+        }
+        const data = JSON.parse(result.recordset[0].data);
+        return NextResponse.json(data);
+    } catch (error) {
+        console.error('DB read error:', error);
+        // Fallback to JSON file if DB fails
+        return NextResponse.json(portfolioDataFile);
+    }
+}
+
+export async function POST(request) {
+    try {
+        const newData = await request.json();
+        const jsonString = JSON.stringify(newData).replace(/'/g, "''"); // escape single quotes
+
+        const pool = await getPool();
+        await ensureTable(pool);
+
+        await pool.request()
+            .input('data', sql.NVarChar(sql.MAX), JSON.stringify(newData))
+            .query(`
+                IF EXISTS (SELECT 1 FROM portfolio_data WHERE id = 1)
+                    UPDATE portfolio_data SET data = @data, updated_at = GETDATE() WHERE id = 1
+                ELSE
+                    INSERT INTO portfolio_data (id, data) VALUES (1, @data)
+            `);
+
+        return NextResponse.json({ success: true, message: 'Saved to database!' });
+    } catch (error) {
+        console.error('DB write error:', error);
+        return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    }
 }

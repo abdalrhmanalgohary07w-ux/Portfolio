@@ -186,9 +186,6 @@ export default function AdminPage() {
     };
 
     const handleSave = async () => {
-        // Always save to localStorage immediately as backup
-        try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch (_) { }
-
         setStatus('⏳ Saving...');
         try {
             const response = await fetch('/api/save-data', {
@@ -197,20 +194,15 @@ export default function AdminPage() {
                 body: JSON.stringify(data)
             });
             const result = await response.json();
-
-            if (!result.success) {
-                setStatus('❌ ' + (result.message || 'Save failed.'));
-            } else if (result.mode === 'local') {
-                setStatus('✅ Saved! Run "git push" to go live.');
-            } else if (result.mode === 'github') {
-                setStatus('🚀 Saved! Site updating automatically in ~1 minute...');
+            if (result.success) {
+                setStatus('✅ Saved to database! Changes are live on the site now.');
             } else {
-                setStatus('⚠️ Saved to browser only. Add GITHUB_TOKEN to Vercel env vars to enable auto-publish.');
+                setStatus('❌ ' + (result.message || 'Save failed.'));
             }
-        } catch (_) {
-            setStatus('⚠️ Saved to browser only. Check your connection.');
+        } catch (err) {
+            setStatus('❌ Connection error: ' + err.message);
         }
-        setTimeout(() => setStatus(''), 8000);
+        setTimeout(() => setStatus(''), 6000);
     };
 
     const handleExportJSON = () => {

@@ -1,12 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
 import Script from "next/script";
-
-import portfolioData from "@/data/portfolioData.json";
+import portfolioDataFallback from "@/data/portfolioData.json";
 
 export default function Home() {
-  const { profile, about, projects, certificates } = portfolioData;
+  const [portfolioData, setPortfolioData] = useState(portfolioDataFallback);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
+  useEffect(() => {
+    fetch('/api/save-data')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data && data.profile) setPortfolioData(data); })
+      .catch(() => { })
+      .finally(() => setDataLoaded(true));
+  }, []);
+
+  const { profile, about, projects, certificates } = portfolioData;
   const photos = about.images || ["/profile.png", "/floating_head_avatar.png", "/hero_avatar.png"];
   const heroImage = profile.heroImage || "/hero_avatar.png";
 

@@ -54,6 +54,21 @@ export async function POST(request) {
                     INSERT INTO portfolio_data (id, data) VALUES (1, @data)
             `);
 
+        // Cleanup: delete images no longer referenced in the data
+        try {
+            const allUrls = JSON.stringify(newData);
+            const usedIds = [...allUrls.matchAll(/\/api\/images\/(\d+)/g)].map(m => parseInt(m[1]));
+            const imagesResult = await pool.request().query('SELECT id FROM portfolio_images');
+            const orphanIds = imagesResult.recordset.map(r => r.id).filter(id => !usedIds.includes(id));
+            for (const orphanId of orphanIds) {
+                await pool.request()
+                    .input('id', sql.Int, orphanId)
+                    .query('DELETE FROM portfolio_images WHERE id = @id');
+            }
+        } catch (cleanupErr) {
+            console.warn('Image cleanup (non-fatal):', cleanupErr.message);
+        }
+
         return NextResponse.json({ success: true, message: 'Saved to database!' });
     } catch (error) {
         console.error('DB write error:', error);

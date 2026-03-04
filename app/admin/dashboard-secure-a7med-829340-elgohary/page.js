@@ -259,6 +259,7 @@ export default function AdminPage() {
         { id: 'techStack', label: 'Skills/Tech', icon: 'fa-code' },
         { id: 'projects', label: 'Projects', icon: 'fa-briefcase' },
         { id: 'certificates', label: 'Certificates', icon: 'fa-award' },
+        { id: 'images', label: 'Images DB', icon: 'fa-images' },
     ];
 
     if (!isMounted) return null;
@@ -298,7 +299,10 @@ export default function AdminPage() {
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => {
+                                setActiveTab(tab.id);
+                                if (tab.id === 'images') openImageManager();
+                            }}
                             style={{
                                 width: '100%',
                                 padding: '16px 30px',
@@ -533,6 +537,68 @@ export default function AdminPage() {
 
                 {/* Tab Contents */}
                 <div style={{ animation: 'adminFadeIn 0.4s ease' }}>
+
+                    {/* ── Images DB Tab ─────────────────────────── */}
+                    {activeTab === 'images' && (
+                        <section>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                <div>
+                                    <h4 style={{ color: '#64ffda', margin: 0 }}>All Images in Database</h4>
+                                    <p style={{ color: '#8892b0', margin: '6px 0 0', fontSize: '13px' }}>{allImages.length} image{allImages.length !== 1 ? 's' : ''} stored</p>
+                                </div>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button onClick={openImageManager} style={{ padding: '10px 18px', background: 'rgba(100,255,218,0.1)', color: '#64ffda', border: '1px solid #64ffda', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                                        <i className="fa-solid fa-rotate" style={{ marginRight: '6px' }}></i>Reload
+                                    </button>
+                                    <button onClick={handleCleanupImages} style={{ padding: '10px 18px', background: 'rgba(255,100,100,0.1)', color: '#ff6464', border: '1px solid #ff6464', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                                        <i className="fa-solid fa-broom" style={{ marginRight: '6px' }}></i>Delete Orphans
+                                    </button>
+                                </div>
+                            </div>
+
+                            {imgsLoading ? (
+                                <div style={{ textAlign: 'center', color: '#64ffda', padding: '80px', fontSize: '18px' }}>
+                                    <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '10px' }}></i>
+                                    Loading images from database...
+                                </div>
+                            ) : allImages.length === 0 ? (
+                                <div style={{ textAlign: 'center', color: '#8892b0', padding: '80px', border: '1px dashed #233554', borderRadius: '12px', fontSize: '16px' }}>
+                                    <i className="fa-solid fa-images" style={{ fontSize: '48px', marginBottom: '16px', display: 'block', opacity: 0.3 }}></i>
+                                    No images in database yet.
+                                </div>
+                            ) : (
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '20px' }}>
+                                    {allImages.map(img => (
+                                        <div key={img.id} style={{ background: '#112240', borderRadius: '12px', border: '1px solid #233554', overflow: 'hidden' }}>
+                                            <div style={{ position: 'relative', height: '150px', background: '#0a192f' }}>
+                                                <img
+                                                    src={`/api/images/${img.id}`}
+                                                    alt={`#${img.id}`}
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    onError={e => { e.target.parentElement.style.background = '#1a2f4a'; e.target.style.display = 'none'; }}
+                                                />
+                                                <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(10,25,47,0.85)', color: '#64ffda', fontSize: '11px', padding: '3px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
+                                                    #{img.id}
+                                                </div>
+                                            </div>
+                                            <div style={{ padding: '12px' }}>
+                                                <div style={{ color: '#8892b0', fontSize: '12px', marginBottom: '10px' }}>
+                                                    {Math.round(img.size_bytes / 1024)} KB &nbsp;·&nbsp; {img.mime_type?.split('/')[1]}
+                                                </div>
+                                                <button
+                                                    onClick={() => deleteImage(img.id)}
+                                                    style={{ width: '100%', padding: '8px', background: 'rgba(255,100,100,0.1)', color: '#ff6464', border: '1px solid rgba(255,100,100,0.4)', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}
+                                                >
+                                                    <i className="fa-solid fa-trash" style={{ marginRight: '6px' }}></i>Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+                    )}
+
                     {activeTab === 'profile' && (
                         <section style={cardStyle}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>

@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import Script from "next/script";
-import portfolioDataFallback from "@/data/portfolioData.json";
+import { emptyPortfolioData } from "@/lib/fallback";
 
 export default function Home() {
-  const [portfolioData, setPortfolioData] = useState(portfolioDataFallback);
+  const [portfolioData, setPortfolioData] = useState(emptyPortfolioData);
   const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {

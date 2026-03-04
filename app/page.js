@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import Script from "next/script";
 import { emptyPortfolioData } from "@/lib/fallback";
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   const [portfolioData, setPortfolioData] = useState(emptyPortfolioData);
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -16,15 +18,15 @@ export default function Home() {
   }, []);
 
   const { profile, about, projects, certificates } = portfolioData;
-  const photos = about.images || ["/profile.png", "/floating_head_avatar.png", "/hero_avatar.png"];
-  const heroImage = profile.heroImage || "/hero_avatar.png";
+  const photos = about?.images || [];
+  const heroImage = profile?.heroImage || "";
 
   // Dynamically initialize order based on number of photos
   const [cardsOrder, setCardsOrder] = useState([]);
   const [isSending, setIsSending] = useState(false);
 
-  const expImages = certificates.map(c => c.image);
-  const expDetails = certificates.map(c => c.details);
+  const expImages = (certificates || []).map(c => c?.image);
+  const expDetails = (certificates || []).map(c => c?.details || []);
   const [activeExp, setActiveExp] = useState(0);
 
   useEffect(() => {
@@ -361,7 +363,7 @@ export default function Home() {
 
                 <div className="hero-image-wrapper gs-reveal" style={{ marginLeft: 'auto', flexShrink: 0, transform: 'translateX(80px)' }}>
                   <div className="hero-image-container">
-                    <img src={heroImage} alt="Ahmed Elgohary Avatar" className="hero-avatar" />
+                    {heroImage && <img src={heroImage} alt="Ahmed Elgohary Avatar" className="hero-avatar" />}
                     <div className="hero-glow"></div>
                   </div>
                   <div className="hero-social">
@@ -379,7 +381,7 @@ export default function Home() {
 
             <div className="marquee-section tech-marquee">
               <div className="marquee-content" style={{ animationDuration: '25s' }}>
-                {[...portfolioData.techStack, ...portfolioData.techStack].map((tech, idx) => (
+                {[...(portfolioData.techStack || []), ...(portfolioData.techStack || [])].map((tech, idx) => (
                   <div key={idx} className="tech-item">
                     <i className={tech.icon} style={{ color: tech.color }}></i> {tech.name}
                   </div>
@@ -452,10 +454,10 @@ export default function Home() {
               <div className="marquee-section projects-marquee">
                 <div className="marquee-content projects-marquee-content">
                   {/* Map over projects doubled for infinite look */}
-                  {[...projects, ...projects].map((project, idx) => (
+                  {[...(projects || []), ...(projects || [])].map((project, idx) => (
                     <div className="modern-card" key={idx}>
                       <div className="modern-card-image">
-                        {project.image.startsWith('placeholder') ? (
+                        {(!project.image || project.image.startsWith('placeholder')) ? (
                           <div className="default-bg" style={{ background: "linear-gradient(135deg, rgba(16,33,62,1), rgba(100,255,218,0.1))", display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
                             <i className={`fa-solid ${project.image === 'placeholder-invoice' ? 'fa-file-invoice-dollar' : 'fa-receipt'} placeholder-icon`} style={{ fontSize: "60px", color: "var(--neon)", opacity: 0.8 }}></i>
                           </div>
@@ -474,7 +476,7 @@ export default function Home() {
                         <h3 className="modern-card-title">{project.title}</h3>
                         <div className="modern-card-desc"><p>{project.description}</p></div>
                         <ul className="modern-card-tech">
-                          {project.tech.map((t, i) => <li key={i}>{t}</li>)}
+                          {(project.tech || []).map((t, i) => <li key={i}>{t}</li>)}
                         </ul>
                       </div>
                     </div>
@@ -494,16 +496,17 @@ export default function Home() {
 
                 <div className="experience-grid">
                   <div className="experience-image-viewer gs-reveal">
-                    {/* Main contained image aligned to top */}
-                    <img
-                      src={expImages[activeExp]}
-                      alt="Certificate"
-                      className="cert-main-img"
-                      key={activeExp}
-                    />
+                    {expImages[activeExp] && (
+                      <img
+                        src={expImages[activeExp]}
+                        alt="Certificate"
+                        className="cert-main-img"
+                        key={activeExp}
+                      />
+                    )}
                     <div className="cert-details-box" key={`details-${activeExp}`} style={{ animation: 'fadeIn 0.5s ease' }}>
                       <ul>
-                        {expDetails[activeExp].map((detail, idx) => (
+                        {(expDetails[activeExp] || []).map((detail, idx) => (
                           <li key={idx}>{detail}</li>
                         ))}
                       </ul>

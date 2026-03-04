@@ -9,19 +9,51 @@ export default function AdminPage() {
     const [activeTab, setActiveTab] = useState('profile');
     const [loading, setLoading] = useState(true);
 
+    // Image Manager modal
+    const [imgManagerOpen, setImgManagerOpen] = useState(false);
+    const [allImages, setAllImages] = useState([]);
+    const [imgsLoading, setImgsLoading] = useState(false);
+
     // Selection states for Master-Detail views
     const [selectedProjectId, setSelectedProjectId] = useState(0);
     const [selectedCertId, setSelectedCertId] = useState(0);
 
     useEffect(() => {
         setIsMounted(true);
-        // Load from DB
         fetch('/api/save-data')
             .then(res => res.json())
             .then(d => { if (d?.profile) setData(d); })
             .catch(e => console.error('Failed to load from DB:', e))
             .finally(() => setLoading(false));
     }, []);
+
+    const openImageManager = async () => {
+        setImgManagerOpen(true);
+        setImgsLoading(true);
+        try {
+            const res = await fetch('/api/images');
+            const result = await res.json();
+            if (result.success) setAllImages(result.images);
+        } catch (e) { console.error(e); }
+        setImgsLoading(false);
+    };
+
+    const deleteImage = async (id) => {
+        if (!confirm(`Delete image #${id} from database?`)) return;
+        try {
+            const res = await fetch(`/api/images/${id}`, { method: 'DELETE' });
+            const result = await res.json();
+            if (result.success) {
+                setAllImages(prev => prev.filter(img => img.id !== id));
+                setStatus(`🗑️ Image #${id} deleted from database.`);
+                setTimeout(() => setStatus(''), 4000);
+            } else {
+                setStatus('❌ ' + result.message);
+            }
+        } catch (e) {
+            setStatus('❌ Error: ' + e.message);
+        }
+    };
 
     const handleProfileChange = (field, value) => {
         setData(prev => ({
@@ -289,12 +321,30 @@ export default function AdminPage() {
                     ))}
                 </nav>
 
-                <div style={{ padding: '30px' }}>
+                <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button
+                        onClick={openImageManager}
+                        style={{
+                            display: 'block',
+                            padding: '12px',
+                            background: 'rgba(100, 255, 218, 0.07)',
+                            color: '#64ffda',
+                            textAlign: 'center',
+                            borderRadius: '4px',
+                            fontSize: '14px',
+                            border: '1px solid #64ffda',
+                            cursor: 'pointer',
+                            width: '100%',
+                        }}
+                    >
+                        <i className="fa-solid fa-images" style={{ marginRight: '8px' }}></i>
+                        Image Manager
+                    </button>
                     <a href="/" target="_blank" style={{
                         display: 'block',
                         padding: '12px',
                         background: 'rgba(230, 241, 255, 0.05)',
-                        color: '#64ffda',
+                        color: '#8892b0',
                         textDecoration: 'none',
                         textAlign: 'center',
                         borderRadius: '4px',
@@ -305,6 +355,93 @@ export default function AdminPage() {
                     </a>
                 </div>
             </aside>
+
+            {/* ── Image Manager Modal ───────────────────────────────────── */}
+            {imgManagerOpen && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 9999,
+                    background: 'rgba(10, 25, 47, 0.92)', backdropFilter: 'blur(6px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                    <div style={{
+                        background: '#112240', border: '1px solid #233554',
+                        borderRadius: '16px', width: '90%', maxWidth: '900px',
+                        maxHeight: '85vh', display: 'flex', flexDirection: 'column',
+                        boxShadow: '0 25px 50px rgba(0,0,0,0.5)'
+                    }}>
+                        {/* Modal Header */}
+                        <div style={{ padding: '24px 30px', borderBottom: '1px solid #233554', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <h3 style={{ color: '#64ffda', margin: 0, fontSize: '20px' }}>
+                                    <i className="fa-solid fa-images" style={{ marginRight: '10px' }}></i>
+                                    Image Manager
+                                </h3>
+                                <p style={{ color: '#8892b0', margin: '6px 0 0', fontSize: '13px' }}>
+                                    {allImages.length} image{allImages.length !== 1 ? 's' : ''} stored in database
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setImgManagerOpen(false)}
+                                style={{ background: 'transparent', border: 'none', color: '#8892b0', fontSize: '22px', cursor: 'pointer' }}
+                            >
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div style={{ padding: '24px 30px', overflowY: 'auto', flex: 1 }}>
+                            {imgsLoading ? (
+                                <div style={{ textAlign: 'center', color: '#64ffda', padding: '40px', fontSize: '16px' }}>
+                                    <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '10px' }}></i>
+                                    Loading images from DB...
+                                </div>
+                            ) : allImages.length === 0 ? (
+                                <div style={{ textAlign: 'center', color: '#8892b0', padding: '60px', border: '1px dashed #233554', borderRadius: '12px' }}>
+                                    No images in database.
+                                </div>
+                            ) : (
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
+                                    {allImages.map(img => (
+                                        <div key={img.id} style={{
+                                            background: '#0a192f', borderRadius: '10px',
+                                            border: '1px solid #233554', overflow: 'hidden',
+                                            position: 'relative', transition: 'border-color 0.2s'
+                                        }}>
+                                            {/* Image preview */}
+                                            <img
+                                                src={`/api/images/${img.id}`}
+                                                alt={`Image #${img.id}`}
+                                                style={{ width: '100%', height: '130px', objectFit: 'cover', display: 'block' }}
+                                                onError={e => { e.target.style.display = 'none'; }}
+                                            />
+                                            {/* Info + Delete */}
+                                            <div style={{ padding: '10px 12px' }}>
+                                                <div style={{ color: '#64ffda', fontSize: '12px', fontFamily: 'monospace', marginBottom: '4px' }}>
+                                                    #{img.id}
+                                                </div>
+                                                <div style={{ color: '#8892b0', fontSize: '11px', marginBottom: '8px' }}>
+                                                    {Math.round(img.size_bytes / 1024)} KB
+                                                </div>
+                                                <button
+                                                    onClick={() => deleteImage(img.id)}
+                                                    style={{
+                                                        width: '100%', padding: '7px', background: 'rgba(255,100,100,0.1)',
+                                                        color: '#ff6464', border: '1px solid #ff6464',
+                                                        borderRadius: '6px', cursor: 'pointer', fontSize: '12px',
+                                                    }}
+                                                >
+                                                    <i className="fa-solid fa-trash" style={{ marginRight: '6px' }}></i>
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Main Content Area */}
             <main style={{ marginLeft: '280px', flex: 1, padding: '40px 60px' }}>

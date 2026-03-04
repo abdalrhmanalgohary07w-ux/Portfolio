@@ -1,45 +1,27 @@
 "use client";
 import { useState, useEffect } from 'react';
-import portfolioDataFile from '@/data/portfolioData.json';
-
-const LS_KEY = 'portfolio_admin_data';
+import { emptyPortfolioData } from '@/lib/fallback';
 
 export default function AdminPage() {
     const [isMounted, setIsMounted] = useState(false);
-    const [data, setData] = useState(portfolioDataFile);
+    const [data, setData] = useState(emptyPortfolioData);
     const [status, setStatus] = useState('');
     const [activeTab, setActiveTab] = useState('profile');
+    const [loading, setLoading] = useState(true);
 
     // Selection states for Master-Detail views
     const [selectedProjectId, setSelectedProjectId] = useState(0);
     const [selectedCertId, setSelectedCertId] = useState(0);
 
-    const [isLoaded, setIsLoaded] = useState(false);
-
     useEffect(() => {
         setIsMounted(true);
-        // Load from localStorage (persists across sessions on this browser)
-        try {
-            const saved = localStorage.getItem(LS_KEY);
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (parsed && parsed.profile) setData(parsed);
-            }
-        } catch (e) {
-            console.warn('Could not load from localStorage', e);
-        }
-        setIsLoaded(true);
+        // Load from DB
+        fetch('/api/save-data')
+            .then(res => res.json())
+            .then(d => { if (d?.profile) setData(d); })
+            .catch(e => console.error('Failed to load from DB:', e))
+            .finally(() => setLoading(false));
     }, []);
-
-    // Auto-save every change to localStorage once initial data is loaded
-    useEffect(() => {
-        if (!isLoaded) return;
-        try {
-            localStorage.setItem(LS_KEY, JSON.stringify(data));
-        } catch (e) {
-            console.warn('Auto-save failed', e);
-        }
-    }, [data, isLoaded]);
 
     const handleProfileChange = (field, value) => {
         setData(prev => ({
@@ -185,6 +167,40 @@ export default function AdminPage() {
         setData(prev => ({ ...prev, techStack: updatedTech }));
     };
 
+    const handleCleanupImages = async () => {
+        if (!confirm('Delete all orphan images from the database? Only images currently in use will be kept.')) return;
+        setStatus('⏳ Cleaning up...');
+        try {
+            const res = await fetch('/api/cleanup-images', { method: 'DELETE' });
+            const result = await res.json();
+            if (result.success) {
+                setStatus(`🗑️ Done! Deleted ${result.deleted} orphan images. ${result.remaining} images still in use.`);
+            } else {
+                setStatus('❌ ' + result.message);
+            }
+        } catch (err) {
+            setStatus('❌ Error: ' + err.message);
+        }
+        setTimeout(() => setStatus(''), 6000);
+    };
+
+    const handleRefresh = async () => {
+        setLoading(true);
+        setStatus('⏳ Loading from DB...');
+        try {
+            const res = await fetch('/api/save-data');
+            const d = await res.json();
+            if (d?.profile) {
+                setData(d);
+                setStatus('✅ Refreshed from database.');
+            }
+        } catch (e) {
+            setStatus('❌ Failed to refresh.');
+        }
+        setLoading(false);
+        setTimeout(() => setStatus(''), 4000);
+    };
+
     const handleSave = async () => {
         setStatus('⏳ Saving...');
         try {
@@ -205,27 +221,6 @@ export default function AdminPage() {
         setTimeout(() => setStatus(''), 6000);
     };
 
-    const handleExportJSON = () => {
-        const json = JSON.stringify(data, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'portfolioData.json';
-        a.click();
-        URL.revokeObjectURL(url);
-        setStatus('📥 JSON downloaded! Replace data/portfolioData.json in your project, then git push to go live.');
-        setTimeout(() => setStatus(''), 7000);
-    };
-
-    const handleReset = () => {
-        if (!confirm('Reset to the last deployed version? All unsaved local changes will be lost.')) return;
-        localStorage.removeItem(LS_KEY);
-        setData(portfolioDataFile);
-        setStatus('🔄 Reset to deployed version.');
-        setTimeout(() => setStatus(''), 3000);
-    };
-
     const tabs = [
         { id: 'profile', label: 'Profile', icon: 'fa-user' },
         { id: 'about', label: 'About Text', icon: 'fa-address-card' },
@@ -235,6 +230,11 @@ export default function AdminPage() {
     ];
 
     if (!isMounted) return null;
+    if (loading) return (
+        <div style={{ minHeight: '100vh', background: '#0a192f', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64ffda', fontFamily: 'monospace', fontSize: '18px', gap: '12px' }}>
+            <i className="fa-solid fa-spinner fa-spin"></i> Loading from database...
+        </div>
+    );
 
     return (
         <div className="admin-dashboard" style={{
@@ -323,7 +323,7 @@ export default function AdminPage() {
 
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <button
-                            onClick={handleReset}
+                            onClick={handleRefresh}
                             style={{
                                 background: 'transparent',
                                 color: '#8892b0',
@@ -334,23 +334,23 @@ export default function AdminPage() {
                                 fontSize: '14px',
                             }}
                         >
-                            Reset
+                            <i className="fa-solid fa-rotate" style={{ marginRight: '8px' }}></i>
+                            Refresh
                         </button>
                         <button
-                            onClick={handleExportJSON}
+                            onClick={handleCleanupImages}
                             style={{
                                 background: 'transparent',
-                                color: '#64ffda',
-                                border: '1px solid #64ffda',
-                                padding: '15px 25px',
+                                color: '#ff6464',
+                                border: '1px solid #ff6464',
+                                padding: '12px 20px',
                                 borderRadius: '4px',
                                 cursor: 'pointer',
-                                fontSize: '15px',
-                                fontWeight: '600',
+                                fontSize: '14px',
                             }}
                         >
-                            <i className="fa-solid fa-download" style={{ marginRight: '8px' }}></i>
-                            Export JSON
+                            <i className="fa-solid fa-trash" style={{ marginRight: '8px' }}></i>
+                            Cleanup Images
                         </button>
 
                         <button
@@ -374,25 +374,9 @@ export default function AdminPage() {
                     </div>
                 </header>
 
-                {/* Workflow info banner */}
-                <div style={{
-                    padding: '12px 18px',
-                    background: 'rgba(100, 255, 218, 0.05)',
-                    border: '1px solid #233554',
-                    borderRadius: '8px',
-                    marginBottom: '30px',
-                    fontSize: '13px',
-                    color: '#8892b0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                }}>
-                    <i className="fa-solid fa-circle-info" style={{ color: '#64ffda' }}></i>
-                    <span>
-                        ✏️ كل تغيير بيتحفظ تلقائياً في المتصفح.&nbsp;
-                        <strong style={{ color: '#ccd6f6' }}>عشان يظهر على السايت:</strong>&nbsp;
-                        اضغط <strong style={{ color: '#64ffda' }}>Export JSON</strong> ← استبدل ملف <code style={{ color: '#64ffda' }}>data/portfolioData.json</code> ← <code style={{ color: '#64ffda' }}>git push</code>
-                    </span>
+                <div style={{ padding: '12px 18px', background: 'rgba(100, 255, 218, 0.05)', border: '1px solid #233554', borderRadius: '8px', marginBottom: '30px', fontSize: '13px', color: '#8892b0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <i className="fa-solid fa-database" style={{ color: '#64ffda' }}></i>
+                    <span>✅ All data is stored in <strong style={{ color: '#64ffda' }}>SQL Server</strong>. Click <strong style={{ color: '#64ffda' }}>Save Changes</strong> to publish instantly — no git push needed.</span>
                 </div>
 
                 {status && (

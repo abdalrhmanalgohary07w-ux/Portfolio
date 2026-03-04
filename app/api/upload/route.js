@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
 
 export async function POST(request) {
     try {
@@ -10,17 +9,19 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: 'No file uploaded' }, { status: 400 });
         }
 
-        // Sanitize filename
-        const filename = file.name.replace(/\s+/g, '-').toLowerCase();
+        // Check file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            return NextResponse.json({ success: false, error: 'File too large. Max size is 2MB.' }, { status: 400 });
+        }
 
-        const blob = await put(`uploads/${filename}`, file, {
-            access: 'public',
-            addRandomSuffix: false,
-        });
+        // Convert to base64 data URL — stored directly in DB as image path
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const base64 = buffer.toString('base64');
+        const mimeType = file.type || 'image/png';
+        const dataUrl = `data:${mimeType};base64,${base64}`;
 
-        console.log(`File uploaded to Vercel Blob: ${blob.url}`);
-
-        return NextResponse.json({ success: true, path: blob.url });
+        return NextResponse.json({ success: true, path: dataUrl });
     } catch (error) {
         console.error('Upload error:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

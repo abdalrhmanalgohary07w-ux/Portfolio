@@ -8,7 +8,7 @@
     "whatsapp": "201097377236",
     "github": "https://github.com/a7med-elgohary",
     "linkedin": "https://linkedin.com/in/ahmed-elgohary7",
-    "heroImage": "/hero_avatar.png"
+    "heroImage": "/api/images/2"
   },
   "about": {
     "text": [
@@ -17,10 +17,10 @@
       "Currently studying Computer Science (Information Systems) at Mansoura University. I love solving complex problems, picking up new technologies fast, and shipping clean, secure systems that make a real impact."
     ],
     "images": [
-      "/profile.png",
-      "/floating_head_avatar.png",
-      "/hero_avatar.png",
-      "/whatsapp-image-2024-02-09-at-01.48.37_a6a2c0b1.jpg"
+      "/api/images/4",
+      "/api/images/5",
+      "/api/images/2",
+      "/api/images/6"
     ],
     "highlights": [
       "Full Stack Development",
@@ -33,7 +33,7 @@
     {
       "title": "HR Management System",
       "description": "A full-featured HR system with secure RESTful APIs, JWT authentication.",
-      "image": "/HR.png",
+      "image": "/api/images/9",
       "tech": [
         "ASP.NET Core",
         "SQL Server",
@@ -45,7 +45,7 @@
     {
       "title": "E-Commerce Platform",
       "description": "Ecommerce solution with cart and admin panel using clean architecture.",
-      "image": "/Ecommerce_Store.png",
+      "image": "/api/images/10",
       "tech": [
         "ASP.NET MVC",
         "SQL Server",
@@ -85,7 +85,7 @@
       "organization": "NTI",
       "fullOrgName": "National Telecommunication Institute",
       "year": "2023",
-      "image": "/MeanStack.png",
+      "image": "/api/images/18",
       "details": [
         "Mastered the MEAN stack (MongoDB, Express.js, Angular, Node.js).",
         "Built dynamic, high-performance web applications with a unified JS ecosystem.",
@@ -97,7 +97,7 @@
       "organization": "Microsoft & freeCodeCamp",
       "fullOrgName": "Professional Certification",
       "year": "2023",
-      "image": "/csharp-cert.png",
+      "image": "/api/images/16",
       "details": [
         "Comprehensive certification covering C# fundamentals and advanced concepts.",
         "Developed deep understanding of object-oriented programming in C#.",
@@ -109,7 +109,7 @@
       "organization": "IEEE MansSB",
       "fullOrgName": "Finalist & Award Winner",
       "year": "2024",
-      "image": "/victoris-cert.png",
+      "image": "/api/images/17",
       "details": [
         "Winner of the Victoris 4.0 Competition for AI-Powered Applications.",
         "Developed innovative solutions using advanced Artificial Intelligence.",

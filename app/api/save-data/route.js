@@ -1,74 +1,25 @@
 import { NextResponse } from 'next/server';
-import { getPool, sql } from '@/lib/db';
-import portfolioDataFile from '@/data/portfolioData.json';
-
-// Run once to create table + seed initial data if empty
-async function ensureTable(pool) {
-    await pool.request().query(`
-        IF NOT EXISTS (
-            SELECT * FROM sysobjects WHERE name='portfolio_data' AND xtype='U'
-        )
-        BEGIN
-            CREATE TABLE portfolio_data (
-                id INT PRIMARY KEY DEFAULT 1,
-                data NVARCHAR(MAX) NOT NULL,
-                updated_at DATETIME DEFAULT GETDATE()
-            );
-            INSERT INTO portfolio_data (id, data)
-            VALUES (1, '${JSON.stringify(portfolioDataFile).replace(/'/g, "''")}');
-        END
-    `);
-}
+import { getPool, createSchema, readPortfolioData, writePortfolioData } from '@/lib/db';
+import portfolioDataFallback from '@/data/portfolioData.json';
 
 export async function GET() {
     try {
         const pool = await getPool();
-        await ensureTable(pool);
-        const result = await pool.request().query('SELECT data FROM portfolio_data WHERE id = 1');
-        if (result.recordset.length === 0) {
-            return NextResponse.json(portfolioDataFile);
-        }
-        const data = JSON.parse(result.recordset[0].data);
+        await createSchema(pool);
+        const data = await readPortfolioData(pool);
         return NextResponse.json(data);
     } catch (error) {
         console.error('DB read error:', error);
-        // Fallback to JSON file if DB fails
-        return NextResponse.json(portfolioDataFile);
+        return NextResponse.json(portfolioDataFallback);
     }
 }
 
 export async function POST(request) {
     try {
         const newData = await request.json();
-        const jsonString = JSON.stringify(newData).replace(/'/g, "''"); // escape single quotes
-
         const pool = await getPool();
-        await ensureTable(pool);
-
-        await pool.request()
-            .input('data', sql.NVarChar(sql.MAX), JSON.stringify(newData))
-            .query(`
-                IF EXISTS (SELECT 1 FROM portfolio_data WHERE id = 1)
-                    UPDATE portfolio_data SET data = @data, updated_at = GETDATE() WHERE id = 1
-                ELSE
-                    INSERT INTO portfolio_data (id, data) VALUES (1, @data)
-            `);
-
-        // Cleanup: delete images no longer referenced in the data
-        try {
-            const allUrls = JSON.stringify(newData);
-            const usedIds = [...allUrls.matchAll(/\/api\/images\/(\d+)/g)].map(m => parseInt(m[1]));
-            const imagesResult = await pool.request().query('SELECT id FROM portfolio_images');
-            const orphanIds = imagesResult.recordset.map(r => r.id).filter(id => !usedIds.includes(id));
-            for (const orphanId of orphanIds) {
-                await pool.request()
-                    .input('id', sql.Int, orphanId)
-                    .query('DELETE FROM portfolio_images WHERE id = @id');
-            }
-        } catch (cleanupErr) {
-            console.warn('Image cleanup (non-fatal):', cleanupErr.message);
-        }
-
+        await createSchema(pool);
+        await writePortfolioData(pool, newData);
         return NextResponse.json({ success: true, message: 'Saved to database!' });
     } catch (error) {
         console.error('DB write error:', error);

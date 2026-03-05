@@ -8,6 +8,7 @@ export default function AdminPage() {
     const [status, setStatus] = useState('');
     const [activeTab, setActiveTab] = useState('profile');
     const [loading, setLoading] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Image Manager modal
     const [imgManagerOpen, setImgManagerOpen] = useState(false);
@@ -275,608 +276,641 @@ export default function AdminPage() {
             color: '#ccd6f6',
             minHeight: '100vh',
             display: 'flex',
+            flexDirection: 'column',
             fontFamily: 'Inter, system-ui, sans-serif'
         }}>
-            {/* Sidebar */}
-            <aside style={{
-                width: '280px',
-                background: '#112240',
-                borderRight: '1px solid #233554',
-                padding: '30px 0',
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'fixed',
-                height: '100vh',
-                zIndex: 10
-            }}>
-                <div style={{ padding: '0 30px 40px' }}>
-                    <div style={{ color: '#64ffda', fontSize: '24px', fontWeight: 'bold', fontFamily: 'monospace' }}>
+            <style>{`
+                .admin-layout-wrapper {
+                    display: flex;
+                    flex: 1;
+                    position: relative;
+                }
+                .admin-sidebar {
+                    width: 280px;
+                    background: #112240;
+                    border-right: 1px solid #233554;
+                    padding: 30px 0;
+                    display: flex;
+                    flex-direction: column;
+                    position: fixed;
+                    height: 100vh;
+                    z-index: 100;
+                    top: 0;
+                    left: 0;
+                    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    overflow-y: auto;
+                }
+                .admin-main {
+                    margin-left: 280px;
+                    flex: 1;
+                    padding: 40px 60px;
+                    transition: margin-left 0.3s ease;
+                    width: calc(100% - 280px);
+                }
+                .sidebar-overlay {
+                    display: none;
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(10, 25, 47, 0.8);
+                    z-index: 90;
+                    backdrop-filter: blur(4px);
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                }
+                .sidebar-overlay.open {
+                    display: block;
+                    opacity: 1;
+                }
+                .mobile-header {
+                    display: none;
+                    padding: 15px 25px;
+                    background: #112240;
+                    border-bottom: 1px solid #233554;
+                    align-items: center;
+                    justify-content: space-between;
+                    position: sticky;
+                    top: 0;
+                    z-index: 80;
+                }
+                .hamburger-btn {
+                    background: transparent;
+                    border: 1px solid rgba(100, 255, 218, 0.3);
+                    color: #64ffda;
+                    font-size: 20px;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s;
+                }
+                .hamburger-btn:hover {
+                    background: rgba(100, 255, 218, 0.1);
+                }
+                .close-sidebar-btn {
+                    display: none;
+                    background: transparent;
+                    border: none;
+                    color: #8892b0;
+                    font-size: 24px;
+                    cursor: pointer;
+                    position: absolute;
+                    top: 25px;
+                    right: 20px;
+                }
+                .responsive-grid-2 {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 30px;
+                }
+                .responsive-grid-master {
+                    display: grid;
+                    grid-template-columns: 300px 1fr;
+                    gap: 40px;
+                    align-items: start;
+                }
+                .responsive-header-actions {
+                    display: flex;
+                    gap: 12px;
+                    align-items: center;
+                }
+                
+                @media (max-width: 1024px) {
+                    .admin-sidebar {
+                        transform: translateX(-100%);
+                    }
+                    .admin-sidebar.open {
+                        transform: translateX(0);
+                        box-shadow: 20px 0 50px rgba(2, 12, 27, 0.7);
+                    }
+                    .admin-main {
+                        margin-left: 0;
+                        padding: 30px 20px;
+                        width: 100%;
+                    }
+                    .mobile-header {
+                        display: flex;
+                    }
+                    .close-sidebar-btn {
+                        display: block;
+                    }
+                    .responsive-grid-2 {
+                        grid-template-columns: 1fr;
+                    }
+                    .responsive-grid-master {
+                        grid-template-columns: 1fr;
+                    }
+                    .responsive-header-actions {
+                        flex-direction: column;
+                        width: 100%;
+                    }
+                    .responsive-header {
+                        flex-direction: column;
+                        align-items: flex-start !important;
+                        gap: 20px;
+                    }
+                    .responsive-header-actions button {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                }
+            `}</style>
+
+            {/* Mobile Header */}
+            <div className="mobile-header">
+                <div>
+                    <div style={{ color: '#64ffda', fontSize: '22px', fontWeight: 'bold', fontFamily: 'monospace' }}>
                         {"{"} AE {"}"} ADMIN
                     </div>
                 </div>
+                <button className="hamburger-btn" onClick={() => setIsSidebarOpen(true)}>
+                    <i className="fa-solid fa-bars-staggered"></i>
+                </button>
+            </div>
 
-                <nav style={{ flex: 1 }}>
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => {
-                                setActiveTab(tab.id);
-                                if (tab.id === 'images') openImageManager();
-                            }}
-                            style={{
-                                width: '100%',
-                                padding: '16px 30px',
-                                background: activeTab === tab.id ? 'rgba(100, 255, 218, 0.05)' : 'transparent',
-                                color: activeTab === tab.id ? '#64ffda' : '#8892b0',
-                                border: 'none',
-                                borderLeft: activeTab === tab.id ? '3px solid #64ffda' : '3px solid transparent',
-                                cursor: 'pointer',
-                                fontSize: '15px',
-                                textAlign: 'left',
-                                transition: 'all 0.2s',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '15px'
-                            }}
-                        >
-                            <i className={`fa-solid ${tab.icon}`} style={{ width: '20px' }}></i>
-                            {tab.label}
-                        </button>
-                    ))}
-                </nav>
+            <div className="admin-layout-wrapper">
+                {/* Sidebar Overlay */}
+                <div
+                    className={`sidebar-overlay ${isSidebarOpen ? 'open' : ''}`}
+                    onClick={() => setIsSidebarOpen(false)}
+                ></div>
 
-                <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <button
-                        onClick={openImageManager}
-                        style={{
-                            display: 'block',
-                            padding: '12px',
-                            background: 'rgba(100, 255, 218, 0.07)',
-                            color: '#64ffda',
-                            textAlign: 'center',
-                            borderRadius: '4px',
-                            fontSize: '14px',
-                            border: '1px solid #64ffda',
-                            cursor: 'pointer',
-                            width: '100%',
-                        }}
-                    >
-                        <i className="fa-solid fa-images" style={{ marginRight: '8px' }}></i>
-                        Image Manager
+                {/* Sidebar */}
+                <aside className={`admin-sidebar ${isSidebarOpen ? 'open' : ''}`}>
+                    <button className="close-sidebar-btn" onClick={() => setIsSidebarOpen(false)}>
+                        <i className="fa-solid fa-xmark"></i>
                     </button>
-                    <a href="/" target="_blank" style={{
-                        display: 'block',
-                        padding: '12px',
-                        background: 'rgba(230, 241, 255, 0.05)',
-                        color: '#8892b0',
-                        textDecoration: 'none',
-                        textAlign: 'center',
-                        borderRadius: '4px',
-                        fontSize: '14px',
-                        border: '1px solid #233554'
-                    }}>
-                        Go to Main Site
-                    </a>
-                </div>
-            </aside>
+                    <div style={{ padding: '0 30px 40px' }}>
+                        <div style={{ color: '#64ffda', fontSize: '24px', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                            {"{"} AE {"}"} ADMIN
+                        </div>
+                    </div>
 
-            {/* ── Image Manager Modal ───────────────────────────────────── */}
-            {imgManagerOpen && (
-                <div style={{
-                    position: 'fixed', inset: 0, zIndex: 9999,
-                    background: 'rgba(10, 25, 47, 0.92)', backdropFilter: 'blur(6px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                    <div style={{
-                        background: '#112240', border: '1px solid #233554',
-                        borderRadius: '16px', width: '90%', maxWidth: '900px',
-                        maxHeight: '85vh', display: 'flex', flexDirection: 'column',
-                        boxShadow: '0 25px 50px rgba(0,0,0,0.5)'
-                    }}>
-                        {/* Modal Header */}
-                        <div style={{ padding: '24px 30px', borderBottom: '1px solid #233554', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <h3 style={{ color: '#64ffda', margin: 0, fontSize: '20px' }}>
-                                    <i className="fa-solid fa-images" style={{ marginRight: '10px' }}></i>
-                                    Image Manager
-                                </h3>
-                                <p style={{ color: '#8892b0', margin: '6px 0 0', fontSize: '13px' }}>
-                                    {allImages.length} image{allImages.length !== 1 ? 's' : ''} stored in database
-                                </p>
-                            </div>
+                    <nav style={{ flex: 1 }}>
+                        {tabs.map(tab => (
                             <button
-                                onClick={() => setImgManagerOpen(false)}
-                                style={{ background: 'transparent', border: 'none', color: '#8892b0', fontSize: '22px', cursor: 'pointer' }}
+                                key={tab.id}
+                                onClick={() => {
+                                    setActiveTab(tab.id);
+                                    if (tab.id === 'images') openImageManager();
+                                }}
+                                style={{
+                                    width: '100%',
+                                    padding: '16px 30px',
+                                    background: activeTab === tab.id ? 'rgba(100, 255, 218, 0.05)' : 'transparent',
+                                    color: activeTab === tab.id ? '#64ffda' : '#8892b0',
+                                    border: 'none',
+                                    borderLeft: activeTab === tab.id ? '3px solid #64ffda' : '3px solid transparent',
+                                    cursor: 'pointer',
+                                    fontSize: '15px',
+                                    textAlign: 'left',
+                                    transition: 'all 0.2s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '15px'
+                                }}
                             >
-                                <i className="fa-solid fa-xmark"></i>
+                                <i className={`fa-solid ${tab.icon}`} style={{ width: '20px' }}></i>
+                                {tab.label}
+                            </button>
+                        ))}
+                    </nav>
+
+                </aside>
+
+                {/* Main Content Area */}
+                <main className="admin-main">
+                    <header className="responsive-header" style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '40px'
+                    }}>
+                        <div>
+                            <h2 style={{ fontSize: '28px', color: '#e6f1ff', margin: 0 }}>
+                                {tabs.find(t => t.id === activeTab).label} Settings
+                            </h2>
+                            <p style={{ color: '#8892b0', marginTop: '8px' }}>Manage your portfolio's {activeTab} section items.</p>
+                        </div>
+
+                        <div className="responsive-header-actions">
+                            <button
+                                onClick={handleRefresh}
+                                style={{
+                                    background: 'transparent',
+                                    color: '#8892b0',
+                                    border: '1px solid #233554',
+                                    padding: '12px 20px',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                }}
+                            >
+                                <i className="fa-solid fa-rotate" style={{ marginRight: '8px' }}></i>
+                                Refresh
+                            </button>
+                            <button
+                                onClick={handleCleanupImages}
+                                style={{
+                                    background: 'transparent',
+                                    color: '#ff6464',
+                                    border: '1px solid #ff6464',
+                                    padding: '12px 20px',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                }}
+                            >
+                                <i className="fa-solid fa-trash" style={{ marginRight: '8px' }}></i>
+                                Cleanup Images
+                            </button>
+
+                            <button
+                                onClick={handleSave}
+                                style={{
+                                    background: '#64ffda',
+                                    color: '#0a192f',
+                                    border: 'none',
+                                    padding: '15px 35px',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '16px',
+                                    fontWeight: '600',
+                                    transition: 'all 0.3s',
+                                    boxShadow: '0 10px 20px -10px rgba(100, 255, 218, 0.3)'
+                                }}
+                            >
+                                <i className="fa-solid fa-floppy-disk" style={{ marginRight: '10px' }}></i>
+                                Save Changes
                             </button>
                         </div>
+                    </header>
 
-                        {/* Modal Body */}
-                        <div style={{ padding: '24px 30px', overflowY: 'auto', flex: 1 }}>
-                            {imgsLoading ? (
-                                <div style={{ textAlign: 'center', color: '#64ffda', padding: '40px', fontSize: '16px' }}>
-                                    <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '10px' }}></i>
-                                    Loading images from DB...
-                                </div>
-                            ) : allImages.length === 0 ? (
-                                <div style={{ textAlign: 'center', color: '#8892b0', padding: '60px', border: '1px dashed #233554', borderRadius: '12px' }}>
-                                    No images in database.
-                                </div>
-                            ) : (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
-                                    {allImages.map(img => (
-                                        <div key={img.id} style={{
-                                            background: '#0a192f', borderRadius: '10px',
-                                            border: '1px solid #233554', overflow: 'hidden',
-                                            position: 'relative', transition: 'border-color 0.2s'
-                                        }}>
-                                            {/* Image preview */}
-                                            <img
-                                                src={`/api/images/${img.id}`}
-                                                alt={`Image #${img.id}`}
-                                                style={{ width: '100%', height: '130px', objectFit: 'cover', display: 'block' }}
-                                                onError={e => { e.target.style.display = 'none'; }}
-                                            />
-                                            {/* Info + Delete */}
-                                            <div style={{ padding: '10px 12px' }}>
-                                                <div style={{ color: '#64ffda', fontSize: '12px', fontFamily: 'monospace', marginBottom: '4px' }}>
-                                                    #{img.id}
-                                                </div>
-                                                <div style={{ color: '#8892b0', fontSize: '11px', marginBottom: '8px' }}>
-                                                    {Math.round(img.size_bytes / 1024)} KB
-                                                </div>
-                                                <button
-                                                    onClick={() => deleteImage(img.id)}
-                                                    style={{
-                                                        width: '100%', padding: '7px', background: 'rgba(255,100,100,0.1)',
-                                                        color: '#ff6464', border: '1px solid #ff6464',
-                                                        borderRadius: '6px', cursor: 'pointer', fontSize: '12px',
-                                                    }}
-                                                >
-                                                    <i className="fa-solid fa-trash" style={{ marginRight: '6px' }}></i>
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                    <div style={{ padding: '12px 18px', background: 'rgba(100, 255, 218, 0.05)', border: '1px solid #233554', borderRadius: '8px', marginBottom: '30px', fontSize: '13px', color: '#8892b0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <i className="fa-solid fa-database" style={{ color: '#64ffda' }}></i>
+                        <span>✅ All data is stored in <strong style={{ color: '#64ffda' }}>SQL Server</strong>. Click <strong style={{ color: '#64ffda' }}>Save Changes</strong> to publish instantly — no git push needed.</span>
+                    </div>
+
+                    {status && (
+                        <div style={{
+                            padding: '18px',
+                            background: status.includes('❌') ? 'rgba(255, 100, 100, 0.1)' : 'rgba(100, 255, 218, 0.1)',
+                            border: `1px solid ${status.includes('❌') ? '#ff6464' : '#64ffda'}`,
+                            borderRadius: '8px',
+                            marginBottom: '40px',
+                            textAlign: 'center',
+                            fontWeight: '500',
+                            color: status.includes('❌') ? '#ff6464' : '#64ffda'
+                        }}>
+                            {status}
                         </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Main Content Area */}
-            <main style={{ marginLeft: '280px', flex: 1, padding: '40px 60px' }}>
-                <header style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '50px'
-                }}>
-                    <div>
-                        <h2 style={{ fontSize: '28px', color: '#e6f1ff', margin: 0 }}>
-                            {tabs.find(t => t.id === activeTab).label} Settings
-                        </h2>
-                        <p style={{ color: '#8892b0', marginTop: '8px' }}>Manage your portfolio's {activeTab} section items.</p>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <button
-                            onClick={handleRefresh}
-                            style={{
-                                background: 'transparent',
-                                color: '#8892b0',
-                                border: '1px solid #233554',
-                                padding: '12px 20px',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                            }}
-                        >
-                            <i className="fa-solid fa-rotate" style={{ marginRight: '8px' }}></i>
-                            Refresh
-                        </button>
-                        <button
-                            onClick={handleCleanupImages}
-                            style={{
-                                background: 'transparent',
-                                color: '#ff6464',
-                                border: '1px solid #ff6464',
-                                padding: '12px 20px',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                            }}
-                        >
-                            <i className="fa-solid fa-trash" style={{ marginRight: '8px' }}></i>
-                            Cleanup Images
-                        </button>
-
-                        <button
-                            onClick={handleSave}
-                            style={{
-                                background: '#64ffda',
-                                color: '#0a192f',
-                                border: 'none',
-                                padding: '15px 35px',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '16px',
-                                fontWeight: '600',
-                                transition: 'all 0.3s',
-                                boxShadow: '0 10px 20px -10px rgba(100, 255, 218, 0.3)'
-                            }}
-                        >
-                            <i className="fa-solid fa-floppy-disk" style={{ marginRight: '10px' }}></i>
-                            Save Changes
-                        </button>
-                    </div>
-                </header>
-
-                <div style={{ padding: '12px 18px', background: 'rgba(100, 255, 218, 0.05)', border: '1px solid #233554', borderRadius: '8px', marginBottom: '30px', fontSize: '13px', color: '#8892b0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <i className="fa-solid fa-database" style={{ color: '#64ffda' }}></i>
-                    <span>✅ All data is stored in <strong style={{ color: '#64ffda' }}>SQL Server</strong>. Click <strong style={{ color: '#64ffda' }}>Save Changes</strong> to publish instantly — no git push needed.</span>
-                </div>
-
-                {status && (
-                    <div style={{
-                        padding: '18px',
-                        background: status.includes('❌') ? 'rgba(255, 100, 100, 0.1)' : 'rgba(100, 255, 218, 0.1)',
-                        border: `1px solid ${status.includes('❌') ? '#ff6464' : '#64ffda'}`,
-                        borderRadius: '8px',
-                        marginBottom: '40px',
-                        textAlign: 'center',
-                        fontWeight: '500',
-                        color: status.includes('❌') ? '#ff6464' : '#64ffda'
-                    }}>
-                        {status}
-                    </div>
-                )}
-
-                {/* Tab Contents */}
-                <div style={{ animation: 'adminFadeIn 0.4s ease' }}>
-
-                    {/* ── Images DB Tab ─────────────────────────── */}
-                    {activeTab === 'images' && (
-                        <section>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                <div>
-                                    <h4 style={{ color: '#64ffda', margin: 0 }}>All Images in Database</h4>
-                                    <p style={{ color: '#8892b0', margin: '6px 0 0', fontSize: '13px' }}>{allImages.length} image{allImages.length !== 1 ? 's' : ''} stored</p>
-                                </div>
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <button onClick={openImageManager} style={{ padding: '10px 18px', background: 'rgba(100,255,218,0.1)', color: '#64ffda', border: '1px solid #64ffda', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
-                                        <i className="fa-solid fa-rotate" style={{ marginRight: '6px' }}></i>Reload
-                                    </button>
-                                    <button onClick={handleCleanupImages} style={{ padding: '10px 18px', background: 'rgba(255,100,100,0.1)', color: '#ff6464', border: '1px solid #ff6464', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
-                                        <i className="fa-solid fa-broom" style={{ marginRight: '6px' }}></i>Delete Orphans
-                                    </button>
-                                </div>
-                            </div>
-
-                            {imgsLoading ? (
-                                <div style={{ textAlign: 'center', color: '#64ffda', padding: '80px', fontSize: '18px' }}>
-                                    <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '10px' }}></i>
-                                    Loading images from database...
-                                </div>
-                            ) : allImages.length === 0 ? (
-                                <div style={{ textAlign: 'center', color: '#8892b0', padding: '80px', border: '1px dashed #233554', borderRadius: '12px', fontSize: '16px' }}>
-                                    <i className="fa-solid fa-images" style={{ fontSize: '48px', marginBottom: '16px', display: 'block', opacity: 0.3 }}></i>
-                                    No images in database yet.
-                                </div>
-                            ) : (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '20px' }}>
-                                    {allImages.map(img => (
-                                        <div key={img.id} style={{ background: '#112240', borderRadius: '12px', border: '1px solid #233554', overflow: 'hidden' }}>
-                                            <div style={{ position: 'relative', height: '150px', background: '#0a192f' }}>
-                                                <img
-                                                    src={`/api/images/${img.id}`}
-                                                    alt={`#${img.id}`}
-                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                    onError={e => { e.target.parentElement.style.background = '#1a2f4a'; e.target.style.display = 'none'; }}
-                                                />
-                                                <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(10,25,47,0.85)', color: '#64ffda', fontSize: '11px', padding: '3px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
-                                                    #{img.id}
-                                                </div>
-                                            </div>
-                                            <div style={{ padding: '12px' }}>
-                                                <div style={{ color: '#8892b0', fontSize: '12px', marginBottom: '10px' }}>
-                                                    {Math.round(img.size_bytes / 1024)} KB &nbsp;·&nbsp; {img.mime_type?.split('/')[1]}
-                                                </div>
-                                                <button
-                                                    onClick={() => deleteImage(img.id)}
-                                                    style={{ width: '100%', padding: '8px', background: 'rgba(255,100,100,0.1)', color: '#ff6464', border: '1px solid rgba(255,100,100,0.4)', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}
-                                                >
-                                                    <i className="fa-solid fa-trash" style={{ marginRight: '6px' }}></i>Delete
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </section>
                     )}
 
-                    {activeTab === 'profile' && (
-                        <section style={cardStyle}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-                                <Field label="Full Name" value={data.profile.name} onChange={(v) => handleProfileChange('name', v)} />
-                                <Field label="Professional Role" value={data.profile.role} onChange={(v) => handleProfileChange('role', v)} />
-                                <Field label="Hero Tagline" value={data.profile.tagline} onChange={(v) => handleProfileChange('tagline', v)} />
-                                <Field label="Email Address" value={data.profile.email} onChange={(v) => handleProfileChange('email', v)} />
-                                <Field label="WhatsApp" value={data.profile.whatsapp} onChange={(v) => handleProfileChange('whatsapp', v)} />
-                                <Field label="GitHub URL" value={data.profile.github} onChange={(v) => handleProfileChange('github', v)} />
-                                <Field label="LinkedIn URL" value={data.profile.linkedin} onChange={(v) => handleProfileChange('linkedin', v)} />
-                                <div style={{ gridColumn: 'span 2' }}>
-                                    <ImageUploadField
-                                        label="Hero Section Avatar"
-                                        value={data.profile.heroImage || ''}
-                                        onUpload={(e) => handleFileUpload(e, 'profile', 'heroImage')}
-                                        onTextChange={(v) => handleProfileChange('heroImage', v)}
-                                    />
-                                </div>
-                                <div style={{ gridColumn: 'span 2' }}>
-                                    <label style={labelStyle}>Hero Bio / Description</label>
-                                    <textarea
-                                        style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }}
-                                        value={data.profile.description}
-                                        onChange={(e) => handleProfileChange('description', e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        </section>
-                    )}
+                    {/* Tab Contents */}
+                    <div style={{ animation: 'adminFadeIn 0.4s ease' }}>
 
-                    {activeTab === 'about' && (
-                        <section style={cardStyle}>
-                            <h4 style={{ color: '#64ffda', marginBottom: '20px' }}>Biography Paragraphs</h4>
-                            {data.about.text.map((text, idx) => (
-                                <div key={idx} style={{ marginBottom: '20px', position: 'relative' }}>
-                                    <span style={{ position: 'absolute', top: '-10px', left: '15px', background: '#112240', padding: '0 10px', fontSize: '12px', color: '#8892b0' }}>Paragraph {idx + 1}</span>
-                                    <textarea
-                                        style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }}
-                                        value={text}
-                                        onChange={(e) => handleAboutTextChange(idx, e.target.value)}
-                                    />
+                        {/* ── Images DB Tab ─────────────────────────── */}
+                        {activeTab === 'images' && (
+                            <section>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                    <div>
+                                        <h4 style={{ color: '#64ffda', margin: 0 }}>All Images in Database</h4>
+                                        <p style={{ color: '#8892b0', margin: '6px 0 0', fontSize: '13px' }}>{allImages.length} image{allImages.length !== 1 ? 's' : ''} stored</p>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <button onClick={openImageManager} style={{ padding: '10px 18px', background: 'rgba(100,255,218,0.1)', color: '#64ffda', border: '1px solid #64ffda', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                                            <i className="fa-solid fa-rotate" style={{ marginRight: '6px' }}></i>Reload
+                                        </button>
+                                        <button onClick={handleCleanupImages} style={{ padding: '10px 18px', background: 'rgba(255,100,100,0.1)', color: '#ff6464', border: '1px solid #ff6464', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                                            <i className="fa-solid fa-broom" style={{ marginRight: '6px' }}></i>Delete Orphans
+                                        </button>
+                                    </div>
                                 </div>
-                            ))}
-                            <div style={{ marginTop: '30px' }}>
-                                <h4 style={{ color: '#64ffda', marginBottom: '20px' }}>Core Highlights</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                    {data.about.highlights.map((h, idx) => (
-                                        <input
-                                            key={idx}
-                                            style={inputStyle}
-                                            value={h}
-                                            onChange={(e) => handleHighlightChange(idx, e.target.value)}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
 
-                            <div style={{ marginTop: '30px', borderTop: '1px solid #233554', paddingTop: '30px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                    <h4 style={{ color: '#64ffda', margin: 0 }}>About Me Images (Photo Stack)</h4>
-                                    <button onClick={handleAddAboutImage} style={addBtnMiniStyle}>+ Add Image</button>
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                    {(data.about.images || []).map((img, idx) => (
-                                        <div key={`img-${img}-${idx}`} style={{ position: 'relative', background: 'rgba(10, 25, 47, 0.3)', padding: '20px', borderRadius: '12px', border: '1px solid #233554' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    {img && !img.startsWith('placeholder') && (
-                                                        <img src={img} alt="preview" style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #233554' }} />
-                                                    )}
-                                                    <span style={{ fontSize: '13px', color: '#8892b0', fontWeight: '600' }}>Card {idx + 1}</span>
+                                {imgsLoading ? (
+                                    <div style={{ textAlign: 'center', color: '#64ffda', padding: '80px', fontSize: '18px' }}>
+                                        <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '10px' }}></i>
+                                        Loading images from database...
+                                    </div>
+                                ) : allImages.length === 0 ? (
+                                    <div style={{ textAlign: 'center', color: '#8892b0', padding: '80px', border: '1px dashed #233554', borderRadius: '12px', fontSize: '16px' }}>
+                                        <i className="fa-solid fa-images" style={{ fontSize: '48px', marginBottom: '16px', display: 'block', opacity: 0.3 }}></i>
+                                        No images in database yet.
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '20px' }}>
+                                        {allImages.map(img => (
+                                            <div key={img.id} style={{ background: '#112240', borderRadius: '12px', border: '1px solid #233554', overflow: 'hidden' }}>
+                                                <div style={{ position: 'relative', height: '150px', background: '#0a192f' }}>
+                                                    <img
+                                                        src={`/api/images/${img.id}`}
+                                                        alt={`#${img.id}`}
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        onError={e => { e.target.parentElement.style.background = '#1a2f4a'; e.target.style.display = 'none'; }}
+                                                    />
+                                                    <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(10,25,47,0.85)', color: '#64ffda', fontSize: '11px', padding: '3px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
+                                                        #{img.id}
+                                                    </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => handleRemoveAboutImage(idx)}
-                                                    style={{ background: 'transparent', border: 'none', color: '#ff6464', cursor: 'pointer', fontSize: '18px' }}
-                                                    title="Remove Image"
-                                                >
-                                                    <i className="fa-solid fa-circle-xmark"></i>
-                                                </button>
+                                                <div style={{ padding: '12px' }}>
+                                                    <div style={{ color: '#8892b0', fontSize: '12px', marginBottom: '10px' }}>
+                                                        {Math.round(img.size_bytes / 1024)} KB &nbsp;·&nbsp; {img.mime_type?.split('/')[1]}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => deleteImage(img.id)}
+                                                        style={{ width: '100%', padding: '8px', background: 'rgba(255,100,100,0.1)', color: '#ff6464', border: '1px solid rgba(255,100,100,0.4)', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}
+                                                    >
+                                                        <i className="fa-solid fa-trash" style={{ marginRight: '6px' }}></i>Delete
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <ImageUploadField
-                                                label=""
-                                                value={img}
-                                                onUpload={(e) => handleFileUpload(e, 'about-images', 'images', idx)}
-                                                onTextChange={(v) => handleAboutImageChange(idx, v)}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                                {(data.about.images?.length === 0) && (
-                                    <p style={{ textAlign: 'center', color: '#8892b0', padding: '30px', border: '1px dashed #233554', borderRadius: '12px' }}>
-                                        No images in stack. Add some to enable the Photo Stack effect!
-                                    </p>
+                                        ))}
+                                    </div>
                                 )}
-                            </div>
-                        </section>
-                    )}
+                            </section>
+                        )}
 
-                    {activeTab === 'techStack' && (
-                        <section>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                                {data.techStack.map((tech, idx) => (
-                                    <div key={idx} style={itemBoxStyle}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                            <div style={{ width: '40px', height: '40px', background: 'rgba(100, 255, 218, 0.1)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <i className={tech.icon} style={{ color: tech.color, fontSize: '20px' }}></i>
-                                            </div>
-                                            <button onClick={() => removeTech(idx)} style={iconBtnStyle} title="Delete"><i className="fa-solid fa-trash"></i></button>
-                                        </div>
-                                        <Field label="Name" value={tech.name} onChange={(v) => handleTechChange(idx, 'name', v)} />
-                                        <Field label="Icon Class" value={tech.icon} onChange={(v) => handleTechChange(idx, 'icon', v)} />
-                                        <Field label="Brand Color" value={tech.color} onChange={(v) => handleTechChange(idx, 'color', v)} />
+                        {activeTab === 'profile' && (
+                            <section style={cardStyle}>
+                                <div className="responsive-grid-2">
+                                    <Field label="Full Name" value={data.profile.name} onChange={(v) => handleProfileChange('name', v)} />
+                                    <Field label="Professional Role" value={data.profile.role} onChange={(v) => handleProfileChange('role', v)} />
+                                    <Field label="Hero Tagline" value={data.profile.tagline} onChange={(v) => handleProfileChange('tagline', v)} />
+                                    <Field label="Email Address" value={data.profile.email} onChange={(v) => handleProfileChange('email', v)} />
+                                    <Field label="WhatsApp" value={data.profile.whatsapp} onChange={(v) => handleProfileChange('whatsapp', v)} />
+                                    <Field label="GitHub URL" value={data.profile.github} onChange={(v) => handleProfileChange('github', v)} />
+                                    <Field label="LinkedIn URL" value={data.profile.linkedin} onChange={(v) => handleProfileChange('linkedin', v)} />
+                                    <div style={{ gridColumn: 'span 2' }}>
+                                        <ImageUploadField
+                                            label="Hero Section Avatar"
+                                            value={data.profile.heroImage || ''}
+                                            onUpload={(e) => handleFileUpload(e, 'profile', 'heroImage')}
+                                            onTextChange={(v) => handleProfileChange('heroImage', v)}
+                                        />
+                                    </div>
+                                    <div style={{ gridColumn: 'span 2' }}>
+                                        <label style={labelStyle}>Hero Bio / Description</label>
+                                        <textarea
+                                            style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }}
+                                            value={data.profile.description}
+                                            onChange={(e) => handleProfileChange('description', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            </section>
+                        )}
+
+                        {activeTab === 'about' && (
+                            <section style={cardStyle}>
+                                <h4 style={{ color: '#64ffda', marginBottom: '20px' }}>Biography Paragraphs</h4>
+                                {data.about.text.map((text, idx) => (
+                                    <div key={idx} style={{ marginBottom: '20px', position: 'relative' }}>
+                                        <span style={{ position: 'absolute', top: '-10px', left: '15px', background: '#112240', padding: '0 10px', fontSize: '12px', color: '#8892b0' }}>Paragraph {idx + 1}</span>
+                                        <textarea
+                                            style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }}
+                                            value={text}
+                                            onChange={(e) => handleAboutTextChange(idx, e.target.value)}
+                                        />
                                     </div>
                                 ))}
-                                <button onClick={addTech} style={addItemBoxStyle}>
-                                    <i className="fa-solid fa-plus-circle" style={{ fontSize: '28px', marginBottom: '10px' }}></i>
-                                    Add New Skill
-                                </button>
-                            </div>
-                        </section>
-                    )}
+                                <div style={{ marginTop: '30px' }}>
+                                    <h4 style={{ color: '#64ffda', marginBottom: '20px' }}>Core Highlights</h4>
+                                    <div className="responsive-grid-2" style={{ gap: '20px' }}>
+                                        {data.about.highlights.map((h, idx) => (
+                                            <input
+                                                key={idx}
+                                                style={inputStyle}
+                                                value={h}
+                                                onChange={(e) => handleHighlightChange(idx, e.target.value)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
 
-                    {activeTab === 'projects' && (
-                        <section style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '40px', alignItems: 'start' }}>
-                            {/* Master List */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                <button onClick={addProject} style={addBtnStyleMaster}>+ Add Project</button>
-                                <div style={{
-                                    maxHeight: '70vh',
-                                    overflowY: 'auto',
-                                    paddingRight: '10px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '10px',
-                                    // Custom scrollbar classes or styles
-                                }}>
-                                    {data.projects.map((p, idx) => (
-                                        <div
-                                            key={idx}
-                                            onClick={() => setSelectedProjectId(idx)}
-                                            style={{
-                                                padding: '15px',
-                                                background: selectedProjectId === idx ? 'rgba(100, 255, 218, 0.1)' : '#112240',
-                                                border: `1px solid ${selectedProjectId === idx ? '#64ffda' : '#233554'}`,
-                                                borderRadius: '8px',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '12px'
-                                            }}
-                                        >
-                                            <div style={{ width: '40px', height: '40px', background: '#0a192f', borderRadius: '4px', overflow: 'hidden' }}>
-                                                {p.image && !p.image.startsWith('placeholder') ? (
-                                                    <img src={p.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                ) : (
-                                                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                        <i className="fa-solid fa-folder" style={{ color: '#8892b0' }}></i>
+                                <div style={{ marginTop: '30px', borderTop: '1px solid #233554', paddingTop: '30px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                        <h4 style={{ color: '#64ffda', margin: 0 }}>About Me Images (Photo Stack)</h4>
+                                        <button onClick={handleAddAboutImage} style={addBtnMiniStyle}>+ Add Image</button>
+                                    </div>
+                                    <div className="responsive-grid-2" style={{ gap: '20px' }}>
+                                        {(data.about.images || []).map((img, idx) => (
+                                            <div key={`img-${img}-${idx}`} style={{ position: 'relative', background: 'rgba(10, 25, 47, 0.3)', padding: '20px', borderRadius: '12px', border: '1px solid #233554' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        {img && !img.startsWith('placeholder') && (
+                                                            <img src={img} alt="preview" style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #233554' }} />
+                                                        )}
+                                                        <span style={{ fontSize: '13px', color: '#8892b0', fontWeight: '600' }}>Card {idx + 1}</span>
                                                     </div>
-                                                )}
+                                                    <button
+                                                        onClick={() => handleRemoveAboutImage(idx)}
+                                                        style={{ background: 'transparent', border: 'none', color: '#ff6464', cursor: 'pointer', fontSize: '18px' }}
+                                                        title="Remove Image"
+                                                    >
+                                                        <i className="fa-solid fa-circle-xmark"></i>
+                                                    </button>
+                                                </div>
+                                                <ImageUploadField
+                                                    label=""
+                                                    value={img}
+                                                    onUpload={(e) => handleFileUpload(e, 'about-images', 'images', idx)}
+                                                    onTextChange={(v) => handleAboutImageChange(idx, v)}
+                                                />
                                             </div>
-                                            <span style={{ fontSize: '14px', color: selectedProjectId === idx ? '#64ffda' : '#ccd6f6', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {p.title || 'Untitled'}
-                                            </span>
+                                        ))}
+                                    </div>
+                                    {(data.about.images?.length === 0) && (
+                                        <p style={{ textAlign: 'center', color: '#8892b0', padding: '30px', border: '1px dashed #233554', borderRadius: '12px' }}>
+                                            No images in stack. Add some to enable the Photo Stack effect!
+                                        </p>
+                                    )}
+                                </div>
+                            </section>
+                        )}
+
+                        {activeTab === 'techStack' && (
+                            <section>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                                    {data.techStack.map((tech, idx) => (
+                                        <div key={idx} style={itemBoxStyle}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                                <div style={{ width: '40px', height: '40px', background: 'rgba(100, 255, 218, 0.1)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <i className={tech.icon} style={{ color: tech.color, fontSize: '20px' }}></i>
+                                                </div>
+                                                <button onClick={() => removeTech(idx)} style={iconBtnStyle} title="Delete"><i className="fa-solid fa-trash"></i></button>
+                                            </div>
+                                            <Field label="Name" value={tech.name} onChange={(v) => handleTechChange(idx, 'name', v)} />
+                                            <Field label="Icon Class" value={tech.icon} onChange={(v) => handleTechChange(idx, 'icon', v)} />
+                                            <Field label="Brand Color" value={tech.color} onChange={(v) => handleTechChange(idx, 'color', v)} />
                                         </div>
                                     ))}
+                                    <button onClick={addTech} style={addItemBoxStyle}>
+                                        <i className="fa-solid fa-plus-circle" style={{ fontSize: '28px', marginBottom: '10px' }}></i>
+                                        Add New Skill
+                                    </button>
                                 </div>
-                            </div>
+                            </section>
+                        )}
 
-                            {/* Details View */}
-                            {data.projects[selectedProjectId] && (
-                                <div style={cardStyle}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', borderBottom: '1px solid #233554', paddingBottom: '15px' }}>
-                                        <h3 style={{ margin: 0, color: '#e6f1ff' }}>Details: {data.projects[selectedProjectId].title}</h3>
-                                        <button onClick={() => removeProject(selectedProjectId)} style={deleteBtnStyle}>Delete Project</button>
-                                    </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
-                                        <Field label="Project Title" value={data.projects[selectedProjectId].title} onChange={(v) => handleProjectChange(selectedProjectId, 'title', v)} />
-                                        <ImageUploadField
-                                            label="Project Image"
-                                            value={data.projects[selectedProjectId].image}
-                                            onUpload={(e) => handleFileUpload(e, 'projects', 'image', selectedProjectId)}
-                                            onTextChange={(v) => handleProjectChange(selectedProjectId, 'image', v)}
-                                        />
-                                        <Field label="GitHub URL" value={data.projects[selectedProjectId].github} onChange={(v) => handleProjectChange(selectedProjectId, 'github', v)} />
-                                        <Field label="Live URL" value={data.projects[selectedProjectId].link} onChange={(v) => handleProjectChange(selectedProjectId, 'link', v)} />
-                                        <div style={{ gridColumn: 'span 2' }}>
-                                            <Field label="Tech Stack (comma separated)" value={data.projects[selectedProjectId].tech.join(', ')} onChange={(v) => handleProjectChange(selectedProjectId, 'tech', v)} />
-                                        </div>
-                                        <div style={{ gridColumn: 'span 2' }}>
-                                            <label style={labelStyle}>Project Description</label>
-                                            <textarea
-                                                style={{ ...inputStyle, minHeight: '120px' }}
-                                                value={data.projects[selectedProjectId].description}
-                                                onChange={(e) => handleProjectChange(selectedProjectId, 'description', e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </section>
-                    )}
-
-                    {activeTab === 'certificates' && (
-                        <section style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '40px', alignItems: 'start' }}>
-                            {/* Master List */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                <button onClick={addCert} style={addBtnStyleMaster}>+ Add Certificate</button>
-                                <div style={{
-                                    maxHeight: '70vh',
-                                    overflowY: 'auto',
-                                    paddingRight: '10px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '10px'
-                                }}>
-                                    {data.certificates.map((c, idx) => (
-                                        <div
-                                            key={idx}
-                                            onClick={() => setSelectedCertId(idx)}
-                                            style={{
-                                                padding: '15px',
-                                                background: selectedCertId === idx ? 'rgba(100, 255, 218, 0.1)' : '#112240',
-                                                border: `1px solid ${selectedCertId === idx ? '#64ffda' : '#233554'}`,
-                                                borderRadius: '8px',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '12px'
-                                            }}
-                                        >
-                                            <div style={{ width: '40px', height: '40px', background: '#0a192f', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <i className="fa-solid fa-award" style={{ color: selectedCertId === idx ? '#64ffda' : '#8892b0' }}></i>
+                        {activeTab === 'projects' && (
+                            <section className="responsive-grid-master">
+                                {/* Master List */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                    <button onClick={addProject} style={addBtnStyleMaster}>+ Add Project</button>
+                                    <div style={{
+                                        maxHeight: '70vh',
+                                        overflowY: 'auto',
+                                        paddingRight: '10px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '10px',
+                                        // Custom scrollbar classes or styles
+                                    }}>
+                                        {data.projects.map((p, idx) => (
+                                            <div
+                                                key={idx}
+                                                onClick={() => setSelectedProjectId(idx)}
+                                                style={{
+                                                    padding: '15px',
+                                                    background: selectedProjectId === idx ? 'rgba(100, 255, 218, 0.1)' : '#112240',
+                                                    border: `1px solid ${selectedProjectId === idx ? '#64ffda' : '#233554'}`,
+                                                    borderRadius: '8px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '12px'
+                                                }}
+                                            >
+                                                <div style={{ width: '40px', height: '40px', background: '#0a192f', borderRadius: '4px', overflow: 'hidden' }}>
+                                                    {p.image && !p.image.startsWith('placeholder') ? (
+                                                        <img src={p.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    ) : (
+                                                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <i className="fa-solid fa-folder" style={{ color: '#8892b0' }}></i>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <span style={{ fontSize: '14px', color: selectedProjectId === idx ? '#64ffda' : '#ccd6f6', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {p.title || 'Untitled'}
+                                                </span>
                                             </div>
-                                            <span style={{ fontSize: '14px', color: selectedCertId === idx ? '#64ffda' : '#ccd6f6', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {c.title || 'New Entry'}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Details View */}
-                            {data.certificates[selectedCertId] && (
-                                <div style={cardStyle}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', borderBottom: '1px solid #233554', paddingBottom: '15px' }}>
-                                        <h3 style={{ margin: 0, color: '#e6f1ff' }}>Credential: {data.certificates[selectedCertId].title}</h3>
-                                        <button onClick={() => removeCert(selectedCertId)} style={deleteBtnStyle}>Delete Entry</button>
+                                        ))}
                                     </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
-                                        <Field label="Cert Title" value={data.certificates[selectedCertId].title} onChange={(v) => handleCertChange(selectedCertId, 'title', v)} />
-                                        <Field label="Organization" value={data.certificates[selectedCertId].organization} onChange={(v) => handleCertChange(selectedCertId, 'organization', v)} />
-                                        <Field label="Full Org Name" value={data.certificates[selectedCertId].fullOrgName} onChange={(v) => handleCertChange(selectedCertId, 'fullOrgName', v)} />
-                                        <Field label="Year" value={data.certificates[selectedCertId].year} onChange={(v) => handleCertChange(selectedCertId, 'year', v)} />
-                                        <div style={{ gridColumn: 'span 2' }}>
+                                </div>
+
+                                {/* Details View */}
+                                {data.projects[selectedProjectId] && (
+                                    <div style={cardStyle}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', borderBottom: '1px solid #233554', paddingBottom: '15px' }}>
+                                            <h3 style={{ margin: 0, color: '#e6f1ff' }}>Details: {data.projects[selectedProjectId].title}</h3>
+                                            <button onClick={() => removeProject(selectedProjectId)} style={deleteBtnStyle}>Delete Project</button>
+                                        </div>
+                                        <div className="responsive-grid-2" style={{ gap: '25px' }}>
+                                            <Field label="Project Title" value={data.projects[selectedProjectId].title} onChange={(v) => handleProjectChange(selectedProjectId, 'title', v)} />
                                             <ImageUploadField
-                                                label="Certificate Scan"
-                                                value={data.certificates[selectedCertId].image}
-                                                onUpload={(e) => handleFileUpload(e, 'certificates', 'image', selectedCertId)}
-                                                onTextChange={(v) => handleCertChange(selectedCertId, 'image', v)}
+                                                label="Project Image"
+                                                value={data.projects[selectedProjectId].image}
+                                                onUpload={(e) => handleFileUpload(e, 'projects', 'image', selectedProjectId)}
+                                                onTextChange={(v) => handleProjectChange(selectedProjectId, 'image', v)}
                                             />
-                                        </div>
-                                        <div style={{ gridColumn: 'span 2' }}>
-                                            <label style={labelStyle}>Achievement Details (one per line)</label>
-                                            <textarea
-                                                style={{ ...inputStyle, minHeight: '120px' }}
-                                                value={data.certificates[selectedCertId].details.join('\n')}
-                                                onChange={(e) => handleCertChange(selectedCertId, 'details', e.target.value)}
-                                            />
+                                            <Field label="GitHub URL" value={data.projects[selectedProjectId].github} onChange={(v) => handleProjectChange(selectedProjectId, 'github', v)} />
+                                            <Field label="Live URL" value={data.projects[selectedProjectId].link} onChange={(v) => handleProjectChange(selectedProjectId, 'link', v)} />
+                                            <div style={{ gridColumn: 'span 2' }}>
+                                                <Field label="Tech Stack (comma separated)" value={data.projects[selectedProjectId].tech.join(', ')} onChange={(v) => handleProjectChange(selectedProjectId, 'tech', v)} />
+                                            </div>
+                                            <div style={{ gridColumn: 'span 2' }}>
+                                                <label style={labelStyle}>Project Description</label>
+                                                <textarea
+                                                    style={{ ...inputStyle, minHeight: '120px' }}
+                                                    value={data.projects[selectedProjectId].description}
+                                                    onChange={(e) => handleProjectChange(selectedProjectId, 'description', e.target.value)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
+                                )}
+                            </section>
+                        )}
+
+                        {activeTab === 'certificates' && (
+                            <section className="responsive-grid-master">
+                                {/* Master List */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                    <button onClick={addCert} style={addBtnStyleMaster}>+ Add Certificate</button>
+                                    <div style={{
+                                        maxHeight: '70vh',
+                                        overflowY: 'auto',
+                                        paddingRight: '10px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '10px'
+                                    }}>
+                                        {data.certificates.map((c, idx) => (
+                                            <div
+                                                key={idx}
+                                                onClick={() => setSelectedCertId(idx)}
+                                                style={{
+                                                    padding: '15px',
+                                                    background: selectedCertId === idx ? 'rgba(100, 255, 218, 0.1)' : '#112240',
+                                                    border: `1px solid ${selectedCertId === idx ? '#64ffda' : '#233554'}`,
+                                                    borderRadius: '8px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '12px'
+                                                }}
+                                            >
+                                                <div style={{ width: '40px', height: '40px', background: '#0a192f', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <i className="fa-solid fa-award" style={{ color: selectedCertId === idx ? '#64ffda' : '#8892b0' }}></i>
+                                                </div>
+                                                <span style={{ fontSize: '14px', color: selectedCertId === idx ? '#64ffda' : '#ccd6f6', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {c.title || 'New Entry'}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            )}
-                        </section>
-                    )}
-                </div>
-            </main>
+
+                                {/* Details View */}
+                                {data.certificates[selectedCertId] && (
+                                    <div style={cardStyle}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', borderBottom: '1px solid #233554', paddingBottom: '15px' }}>
+                                            <h3 style={{ margin: 0, color: '#e6f1ff' }}>Credential: {data.certificates[selectedCertId].title}</h3>
+                                            <button onClick={() => removeCert(selectedCertId)} style={deleteBtnStyle}>Delete Entry</button>
+                                        </div>
+                                        <div className="responsive-grid-2" style={{ gap: '25px' }}>
+                                            <Field label="Cert Title" value={data.certificates[selectedCertId].title} onChange={(v) => handleCertChange(selectedCertId, 'title', v)} />
+                                            <Field label="Organization" value={data.certificates[selectedCertId].organization} onChange={(v) => handleCertChange(selectedCertId, 'organization', v)} />
+                                            <Field label="Full Org Name" value={data.certificates[selectedCertId].fullOrgName} onChange={(v) => handleCertChange(selectedCertId, 'fullOrgName', v)} />
+                                            <Field label="Year" value={data.certificates[selectedCertId].year} onChange={(v) => handleCertChange(selectedCertId, 'year', v)} />
+                                            <div style={{ gridColumn: 'span 2' }}>
+                                                <ImageUploadField
+                                                    label="Certificate Scan"
+                                                    value={data.certificates[selectedCertId].image}
+                                                    onUpload={(e) => handleFileUpload(e, 'certificates', 'image', selectedCertId)}
+                                                    onTextChange={(v) => handleCertChange(selectedCertId, 'image', v)}
+                                                />
+                                            </div>
+                                            <div style={{ gridColumn: 'span 2' }}>
+                                                <label style={labelStyle}>Achievement Details (one per line)</label>
+                                                <textarea
+                                                    style={{ ...inputStyle, minHeight: '120px' }}
+                                                    value={data.certificates[selectedCertId].details.join('\n')}
+                                                    onChange={(e) => handleCertChange(selectedCertId, 'details', e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </section>
+                        )}
+                    </div>
+                </main>
+            </div>
         </div>
     );
 }

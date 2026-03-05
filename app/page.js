@@ -27,7 +27,6 @@ export default function Home() {
 
   const expImages = (certificates || []).map(c => c?.image);
   const expDetails = (certificates || []).map(c => c?.details || []);
-  const [activeExp, setActiveExp] = useState(0);
 
   useEffect(() => {
     if (photos.length > 0) {
@@ -50,14 +49,27 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (window.THREE && window.gsap && window.ScrollTrigger) {
-        clearInterval(interval);
-        initPortfolio();
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, []);
+    // Only initialize after data is loaded so DOM nodes exist
+    if (!dataLoaded) return;
+
+    let interval;
+    // Small timeout to ensure React has fully rendered the DOM with new data
+    const timeout = setTimeout(() => {
+      interval = setInterval(() => {
+        if (window.THREE && window.gsap && window.ScrollTrigger) {
+          clearInterval(interval);
+          // Refresh scroll triggers in case layout shifted
+          window.ScrollTrigger.refresh();
+          initPortfolio();
+        }
+      }, 100);
+    }, 50);
+
+    return () => {
+      if (interval) clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [dataLoaded]);
 
   function initPortfolio() {
     if (typeof window === "undefined") return;
@@ -94,10 +106,12 @@ export default function Home() {
       el.addEventListener("mouseleave", () => document.body.classList.remove("hovered"));
     });
 
-    if ("ontouchstart" in document.documentElement || navigator.maxTouchPoints > 0) {
+    if ("ontouchstart" in document.documentElement || navigator.maxTouchPoints > 0 || window.innerWidth <= 768) {
       if (dot) dot.style.display = "none";
       if (outline) outline.style.display = "none";
-      document.body.style.cursor = "auto";
+      document.body.classList.remove("custom-cursor-active");
+    } else {
+      document.body.classList.add("custom-cursor-active");
     }
 
     // --- 1b. Hamburger Menu ---
@@ -209,6 +223,8 @@ export default function Home() {
 
     // --- 4. GSAP Scroll Animations ---
     if (gsap && ScrollTrigger) {
+      // Very Important: Kill existing scroll triggers to prevent duplication on strict mode / re-renders
+      ScrollTrigger.getAll().forEach(t => t.kill());
       gsap.registerPlugin(ScrollTrigger);
 
       const revealElements = document.querySelectorAll(".gs-reveal");
@@ -251,33 +267,57 @@ export default function Home() {
       // Certificates Section Pin Animation
       const expSection = document.querySelector(".panel.experience");
       const timelineItems = document.querySelectorAll(".timeline-item");
+      const timelineProgress = document.querySelector(".timeline-progress");
 
       if (expSection && timelineItems.length > 0) {
-        ScrollTrigger.create({
-          trigger: expSection,
-          start: "top top", // Pin when section hits the top
-          end: "+=1500", // Adjusted for 3 items
-          pin: true,
-          scrub: true, // Immediate scroll response
-          animation: gsap.to(".timeline-progress", { height: "100%", ease: "none" }),
-          onUpdate: (self) => {
-            const numItems = timelineItems.length;
-            let activeIndex = Math.floor(self.progress * numItems);
-            // Ensure index is within bounds
-            if (activeIndex >= numItems) activeIndex = numItems - 1;
+        let tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: expSection,
+            start: "top top", // Pin when section hits the top
+            end: "+=1500", // Distance to scroll while pinned
+            pin: true,
+            scrub: true, // Immediate scroll response
+            onUpdate: (self) => {
+              const numItems = timelineItems.length;
+              let activeIndex = Math.floor(self.progress * numItems);
+              // Ensure index is within bounds
+              if (activeIndex >= numItems) activeIndex = numItems - 1;
+              if (activeIndex < 0) activeIndex = 0;
 
-            // Setting state triggers image/text update efficiently (React bails if same index)
-            setActiveExp(activeIndex);
-
-            timelineItems.forEach((item, idx) => {
-              if (idx <= activeIndex) {
-                item.classList.add("active-dot");
-              } else {
-                item.classList.remove("active-dot");
+              // Direct DOM manipulation overrides React rendering for better performance & GSAP compatibility
+              const expViewer = document.querySelector(".experience-image-viewer");
+              if (expViewer) {
+                const imgs = expViewer.querySelectorAll("img.cert-main-img");
+                const details = expViewer.querySelectorAll(".cert-details-box");
+                imgs.forEach((img, idx) => {
+                  img.style.opacity = idx === activeIndex ? "1" : "0";
+                });
+                details.forEach((box, idx) => {
+                  box.style.opacity = idx === activeIndex ? "1" : "0";
+                  box.style.pointerEvents = idx === activeIndex ? "auto" : "none";
+                });
               }
-            });
+
+              timelineItems.forEach((item, idx) => {
+                if (idx <= activeIndex) {
+                  item.classList.add("active-dot");
+                  if (idx === activeIndex) {
+                    item.classList.add("active");
+                  } else {
+                    item.classList.remove("active");
+                  }
+                } else {
+                  item.classList.remove("active-dot");
+                  item.classList.remove("active");
+                }
+              });
+            }
           }
         });
+
+        if (timelineProgress) {
+          tl.fromTo(timelineProgress, { height: "0%" }, { height: "100%", ease: "none" });
+        }
       }
     }
   }
@@ -495,22 +535,43 @@ export default function Home() {
                 </div>
 
                 <div className="experience-grid">
-                  <div className="experience-image-viewer gs-reveal">
-                    {expImages[activeExp] && (
+                  <div className="experience-image-viewer gs-reveal" style={{ position: 'relative' }}>
+                    {certificates.map((cert, idx) => (
                       <img
-                        src={expImages[activeExp]}
+                        key={`img-${idx}`}
+                        src={cert.image}
                         alt="Certificate"
                         className="cert-main-img"
-                        key={activeExp}
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          opacity: idx === 0 ? 1 : 0,
+                          transition: 'opacity 0.4s ease',
+                          pointerEvents: idx === 0 ? 'auto' : 'none',
+                        }}
                       />
-                    )}
-                    <div className="cert-details-box" key={`details-${activeExp}`} style={{ animation: 'fadeIn 0.5s ease' }}>
-                      <ul>
-                        {(expDetails[activeExp] || []).map((detail, idx) => (
-                          <li key={idx}>{detail}</li>
-                        ))}
-                      </ul>
-                    </div>
+                    ))}
+                    {certificates.map((cert, idx) => (
+                      <div
+                        className="cert-details-box"
+                        key={`details-${idx}`}
+                        style={{
+                          opacity: idx === 0 ? 1 : 0,
+                          transition: 'opacity 0.4s ease',
+                          pointerEvents: idx === 0 ? 'auto' : 'none',
+                        }}
+                      >
+                        <ul>
+                          {(cert.details || []).map((detail, dIdx) => (
+                            <li key={dIdx}>{detail}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
                   </div>
 
                   <div className="timeline gs-reveal">
@@ -519,7 +580,7 @@ export default function Home() {
                     {certificates.map((cert, idx) => (
                       <div
                         key={idx}
-                        className={`timeline-item ${activeExp === idx ? 'active' : ''}`}
+                        className={`timeline-item ${idx === 0 ? 'active active-dot' : ''}`}
                       >
                         <div className="timeline-dot"></div>
                         <div className="timeline-content glass-card blur-filter">

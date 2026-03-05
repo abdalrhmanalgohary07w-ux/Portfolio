@@ -5,7 +5,7 @@ export async function GET(request, { params }) {
     const { id } = await params;
 
     try {
-        const pool = await getPool();
+        const pool = await getPool();   
         const result = await pool.request()
             .input('id', sql.Int, parseInt(id))
             .query('SELECT image_data, mime_type FROM portfolio_images WHERE id = @id');

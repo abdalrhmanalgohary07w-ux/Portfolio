@@ -24,6 +24,9 @@ export default function Home() {
   // Dynamically initialize order based on number of photos
   const [cardsOrder, setCardsOrder] = useState([]);
   const [isSending, setIsSending] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showCertDetails, setShowCertDetails] = useState({});
+  const [currentModalImgIdx, setCurrentModalImgIdx] = useState(0);
 
   const expImages = (certificates || []).map(c => c?.image);
   const expDetails = (certificates || []).map(c => c?.details || []);
@@ -49,27 +52,85 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Only initialize after data is loaded so DOM nodes exist
     if (!dataLoaded) return;
 
-    let interval;
-    // Small timeout to ensure React has fully rendered the DOM with new data
-    const timeout = setTimeout(() => {
-      interval = setInterval(() => {
-        if (window.THREE && window.gsap && window.ScrollTrigger) {
-          clearInterval(interval);
-          // Refresh scroll triggers in case layout shifted
-          window.ScrollTrigger.refresh();
-          initPortfolio();
+    const container = document.getElementById("projects-marquee-container");
+    if (!container) return;
+
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+    let autoScrollSpeed = 0.25;
+    let isPaused = false;
+
+    const onMouseDown = (e) => {
+      isDown = true;
+      isPaused = true;
+      startX = e.pageX - container.offsetLeft;
+      scrollLeft = container.scrollLeft;
+    };
+
+    const onMouseEnter = () => { isPaused = true; };
+    const onMouseLeave = () => { isDown = false; isPaused = false; };
+    const onMouseUp = () => { isDown = false; isPaused = false; };
+
+    const onMouseMove = (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - container.offsetLeft;
+      const walk = (x - startX) * 2.5;
+      container.scrollLeft = scrollLeft - walk;
+    };
+
+    container.addEventListener("mousedown", onMouseDown);
+    container.addEventListener("mouseenter", onMouseEnter);
+    container.addEventListener("mouseleave", onMouseLeave);
+    container.addEventListener("mouseup", onMouseUp);
+    container.addEventListener("mousemove", onMouseMove);
+
+    const step = () => {
+      if (!isPaused && !isDown) {
+        container.scrollLeft += autoScrollSpeed;
+        if (container.scrollLeft >= container.scrollWidth / 2) {
+          container.scrollLeft = 0;
         }
-      }, 100);
-    }, 50);
+      }
+      requestAnimationFrame(step);
+    };
+    const animId = requestAnimationFrame(step);
 
     return () => {
-      if (interval) clearInterval(interval);
-      clearTimeout(timeout);
+      container.removeEventListener("mousedown", onMouseDown);
+      container.removeEventListener("mouseenter", onMouseEnter);
+      container.removeEventListener("mouseleave", onMouseLeave);
+      container.removeEventListener("mouseup", onMouseUp);
+      container.removeEventListener("mousemove", onMouseMove);
+      cancelAnimationFrame(animId);
     };
   }, [dataLoaded]);
+
+  useEffect(() => {
+    if (!dataLoaded) return;
+    let interval = setInterval(() => {
+      if (window.THREE && window.gsap && window.ScrollTrigger) {
+        clearInterval(interval);
+        window.ScrollTrigger.refresh();
+        initPortfolio();
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [dataLoaded]);
+
+  useEffect(() => {
+    if (!selectedProject) return;
+    const imgs = selectedProject.images || (selectedProject.image ? [selectedProject.image] : []);
+    if (imgs.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentModalImgIdx(prev => (prev + 1) % imgs.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [selectedProject]);
 
   function initPortfolio() {
     if (typeof window === "undefined") return;
@@ -491,8 +552,8 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="marquee-section projects-marquee">
-                <div className="marquee-content projects-marquee-content">
+              <div className="marquee-section projects-marquee" id="projects-marquee-container">
+                <div className="marquee-content projects-marquee-content" id="projects-marquee-inner">
                   {/* Map over projects doubled for infinite look */}
                   {[...(projects || []), ...(projects || [])].map((project, idx) => (
                     <div className="modern-card" key={idx}>
@@ -515,8 +576,18 @@ export default function Home() {
                         </div>
                         <h3 className="modern-card-title">{project.title}</h3>
                         <div className="modern-card-desc"><p>{project.description}</p></div>
+                        <button
+                          onClick={() => {
+                            setSelectedProject(project);
+                            setCurrentModalImgIdx(0);
+                          }}
+                          className="read-more-link"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
+                        >
+                          Read more <i className="fa-solid fa-arrow-right" style={{ fontSize: '10px' }}></i>
+                        </button>
                         <ul className="modern-card-tech">
-                          {(project.tech || []).map((t, i) => <li key={i}>{t}</li>)}
+                          {(project.tech || []).filter(t => t.trim() !== "").map((t, i) => <li key={i}>{t}</li>)}
                         </ul>
                       </div>
                     </div>
@@ -557,7 +628,7 @@ export default function Home() {
                     ))}
                     {certificates.map((cert, idx) => (
                       <div
-                        className="cert-details-box"
+                        className={`cert-details-box ${showCertDetails[idx] ? 'expanded' : ''}`}
                         key={`details-${idx}`}
                         style={{
                           opacity: idx === 0 ? 1 : 0,
@@ -565,7 +636,14 @@ export default function Home() {
                           pointerEvents: idx === 0 ? 'auto' : 'none',
                         }}
                       >
-                        <ul>
+                        <button
+                          className="know-more-btn"
+                          onClick={() => setShowCertDetails(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                        >
+                          {showCertDetails[idx] ? 'Show Less' : 'Know More'}
+                          <i className={`fa-solid ${showCertDetails[idx] ? 'fa-chevron-down' : 'fa-chevron-up'}`}></i>
+                        </button>
+                        <ul className="cert-details-list">
                           {(cert.details || []).map((detail, dIdx) => (
                             <li key={dIdx}>{detail}</li>
                           ))}
@@ -629,6 +707,68 @@ export default function Home() {
         strategy="afterInteractive"
         id="scrolltrigger"
       />
+      {selectedProject && (
+        <div className="project-modal-overlay" onClick={() => setSelectedProject(null)}>
+          <div className="project-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header" style={{ position: 'sticky', top: 0, zIndex: 1000, background: 'var(--navy)', padding: '15px 25px', borderBottom: '1px solid var(--lightest-navy)', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+              <button className="modal-close-new" onClick={() => setSelectedProject(null)} style={{ background: 'transparent', border: 'none', color: 'var(--slate)', fontSize: '28px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+            <div className="modal-image-container">
+              {(() => {
+                const imgs = selectedProject.images || (selectedProject.image ? [selectedProject.image] : []);
+                if (imgs.length === 0) {
+                  return (
+                    <div className="default-bg" style={{ background: "linear-gradient(135deg, rgba(16,33,62,1), rgba(100,255,218,0.1))", display: "flex", alignItems: "center", justifyContent: "center", height: "350px" }}>
+                      <i className="fa-solid fa-receipt placeholder-icon" style={{ fontSize: "80px", color: "var(--neon)", opacity: 0.8 }}></i>
+                    </div>
+                  );
+                }
+                return (
+                  <div style={{ position: 'relative', width: '100%', minHeight: '350px' }}>
+                    <img src={imgs[currentModalImgIdx]} alt={selectedProject.title} className="modal-image" />
+                    {imgs.length > 1 && (
+                      <>
+                        <button className="modal-arrow left" onClick={(e) => { e.stopPropagation(); setCurrentModalImgIdx(prev => (prev - 1 + imgs.length) % imgs.length); }}>
+                          <i className="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button className="modal-arrow right" onClick={(e) => { e.stopPropagation(); setCurrentModalImgIdx(prev => (prev + 1) % imgs.length); }}>
+                          <i className="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <div className="modal-dots">
+                          {imgs.map((_, i) => (
+                            <div key={i} className={`modal-dot-item ${i === currentModalImgIdx ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); setCurrentModalImgIdx(i); }}></div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+            <div className="modal-body">
+              <h2 className="modal-title">{selectedProject.title}</h2>
+              <ul className="modal-tech-list">
+                {(selectedProject.tech || []).filter(t => t.trim() !== "").map((t, i) => <li key={i}>{t}</li>)}
+              </ul>
+              <div className="modal-desc">
+                <p>{selectedProject.description}</p>
+              </div>
+              <div className="modal-footer">
+                {selectedProject.github && (
+                  <a href={selectedProject.github} target="_blank" className="btn secondary">
+                    <i className="fa-brands fa-github"></i> GitHub
+                  </a>
+                )}
+                {selectedProject.link && (
+                  <a href={selectedProject.link} target="_blank" className="btn primary">
+                    Live Demo <i className="fa-solid fa-arrow-up-right-from-square"></i>
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -84,6 +84,9 @@ export default function AdminPage() {
                     handleAboutImageChange(index, result.path);
                 } else if (section === 'projects') {
                     handleProjectChange(index, field, result.path);
+                } else if (section === 'project-images') {
+                    const currentImages = data.projects[index].images || [];
+                    handleProjectChange(index, 'images', [...currentImages, result.path]);
                 } else if (section === 'certificates') {
                     handleCertChange(index, field, result.path);
                 }
@@ -133,7 +136,9 @@ export default function AdminPage() {
     const handleProjectChange = (index, field, value) => {
         const updatedProjects = [...data.projects];
         if (field === 'tech' && typeof value === 'string') {
-            updatedProjects[index] = { ...updatedProjects[index], [field]: value.split(',').map(s => s.trim()) };
+            updatedProjects[index] = { ...updatedProjects[index], [field]: value.split(',').map(s => s.trim()).filter(s => s !== "") };
+        } else if (field === 'images' && typeof value === 'string') {
+            updatedProjects[index] = { ...updatedProjects[index], [field]: value.split('\n').map(s => s.trim()).filter(s => s !== "") };
         } else {
             updatedProjects[index] = { ...updatedProjects[index], [field]: value };
         }
@@ -141,7 +146,7 @@ export default function AdminPage() {
     };
 
     const addProject = () => {
-        const newProject = { title: 'New Project', description: '', image: '', tech: [], github: '', link: '' };
+        const newProject = { title: 'New Project', description: '', image: '', images: [], tech: [], github: '', link: '' };
         setData(prev => ({
             ...prev,
             projects: [...prev.projects, newProject]
@@ -294,7 +299,7 @@ export default function AdminPage() {
                     flex-direction: column;
                     position: fixed;
                     height: 100vh;
-                    z-index: 100;
+                    z-index: 100;                                       
                     top: 0;
                     left: 0;
                     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -819,6 +824,18 @@ export default function AdminPage() {
                                             <Field label="GitHub URL" value={data.projects[selectedProjectId].github} onChange={(v) => handleProjectChange(selectedProjectId, 'github', v)} />
                                             <Field label="Live URL" value={data.projects[selectedProjectId].link} onChange={(v) => handleProjectChange(selectedProjectId, 'link', v)} />
                                             <div style={{ gridColumn: 'span 2' }}>
+                                                <MultiImageField
+                                                    label="Project Gallery (Multiple Images)"
+                                                    images={data.projects[selectedProjectId].images || []}
+                                                    onAdd={(e) => handleFileUpload(e, 'project-images', 'images', selectedProjectId)}
+                                                    onRemove={(imgIdx) => {
+                                                        const newImgs = data.projects[selectedProjectId].images.filter((_, i) => i !== imgIdx);
+                                                        handleProjectChange(selectedProjectId, 'images', newImgs);
+                                                    }}
+                                                    onEdit={(val) => handleProjectChange(selectedProjectId, 'images', val)}
+                                                />
+                                            </div>
+                                            <div style={{ gridColumn: 'span 2' }}>
                                                 <Field label="Tech Stack (comma separated)" value={data.projects[selectedProjectId].tech.join(', ')} onChange={(v) => handleProjectChange(selectedProjectId, 'tech', v)} />
                                             </div>
                                             <div style={{ gridColumn: 'span 2' }}>
@@ -957,6 +974,49 @@ function ImageUploadField({ label, value, onUpload, onTextChange }) {
                     <input type="file" style={{ display: 'none' }} onChange={onUpload} accept="image/*" />
                 </label>
             </div>
+        </div>
+    );
+}
+
+function MultiImageField({ label, images, onAdd, onRemove, onEdit }) {
+    return (
+        <div style={{ marginBottom: '15px' }}>
+            <label style={labelStyle}>{label}</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '15px', marginBottom: '15px' }}>
+                {images.map((img, i) => (
+                    <div key={i} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #233554', height: '80px', background: '#0a192f' }}>
+                        <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <button
+                            onClick={() => onRemove(i)}
+                            style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(255,100,100,0.8)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}
+                        >
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                ))}
+                <label style={{
+                    border: '2px dashed #233554',
+                    borderRadius: '8px',
+                    height: '80px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#8892b0',
+                    fontSize: '12px'
+                }}>
+                    <i className="fa-solid fa-plus-circle" style={{ fontSize: '20px', marginBottom: '5px' }}></i>
+                    Add Image
+                    <input type="file" style={{ display: 'none' }} onChange={onAdd} accept="image/*" />
+                </label>
+            </div>
+            <textarea
+                style={{ ...inputStyle, minHeight: '60px', fontSize: '12px' }}
+                value={images.join('\n')}
+                onChange={(e) => onEdit(e.target.value)}
+                placeholder="Paths separated by new line"
+            />
         </div>
     );
 }
